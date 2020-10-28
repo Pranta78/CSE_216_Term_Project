@@ -1,0 +1,5 @@
+asgiref==3.2.10
+cx-Oracle==6.4.1
+Django==1.11.17
+pytz==2020.1
+sqlparse==0.4.1

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Create Account
+{% endblock %}
+
+{% block content %}
+    <h1 style="color: lightcoral; background-color: floralwhite; text-align: center">
+        Create Your Account!
+    </h1>
+    {% if message %}
+        <div class="alert alert-danger" role="alert" style="text-align: center">
+            {{ message }}
+        </div>
+    {% endif %}
+
+    <form method="POST"  style="align-content: center; margin-left: 20%; margin-right: 20%">{% csrf_token %}
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <label for="inputEmail">Email</label>
+          <input type="email" class="form-control" id="inputEmail" placeholder="Email" name="email">
+        </div>
+        <div class="form-group col-md-6">
+          <label for="inputUsername">Username</label>
+          <input type="text" class="form-control" id="inputUsername" placeholder="Username" name="username">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="inputPassword">Password</label>
+        <input type="password" class="form-control" id="inputPassword" placeholder="Password" name="password">
+      </div>
+      <div class="form-group">
+        <label for="inputConfirmPassword">Confirm Password</label>
+        <input type="password" class="form-control" id="inputConfirmPassword" placeholder="Confirm Password" name="confirm_password">
+      </div>
+      <div class="form-group">
+        <label for="birthday">Date of Birth</label>
+        <input type="date" class="form-control" id="birthday" name="birthday">
+      </div>
+      <button type="submit" class="btn btn-primary">Sign in</button>
+    </form>
+{% endblock %}
