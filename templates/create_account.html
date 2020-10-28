@@ -5,15 +5,21 @@
 {% endblock %}
 
 {% block content %}
-    <h1 style="color: lightcoral; background-color: floralwhite; text-align: center">
-        Create Your Account!
-    </h1>
-    {% if message %}
-        <div class="alert alert-danger" role="alert" style="text-align: center">
-            {{ message }}
-        </div>
-    {% endif %}
+    <div class="container">
+        <h1 style="color: lightcoral; background-color: floralwhite; text-align: center">
+            Create Your Account!
+        </h1>
+    </div>
 
+    <div class="container">
+        {% if message %}
+            <div class="alert alert-danger" role="alert" style="text-align: center">
+                {{ message }}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="container">
     <form method="POST"  style="align-content: center; margin-left: 20%; margin-right: 20%">{% csrf_token %}
       <div class="form-row">
         <div class="form-group col-md-6">
@@ -37,6 +43,10 @@
         <label for="birthday">Date of Birth</label>
         <input type="date" class="form-control" id="birthday" name="birthday">
       </div>
-      <button type="submit" class="btn btn-primary">Sign in</button>
+      <div align="center">
+            <button type="submit" class="btn btn-primary">Sign in</button>
+      </div>
     </form>
+    </div>
+
 {% endblock %}

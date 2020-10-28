@@ -1,10 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}
+    Log in
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1 style="color: lightcoral; background-color: floralwhite; text-align: center">
+            Log in!
+        </h1>
+    </div>
+
+    <div class="container">
+    {% if message %}
+        <div class="alert alert-danger" role="alert" style="text-align: center">
+            {{ message }}
+        </div>
+    {% endif %}
+    </div>
+
+    <div class="container">
+    <form method="POST"  style="align-content: center; margin-left: 30%; margin-right: 30%">{% csrf_token %}
+        <div class="form-group">
+          <label for="inputUsername" style="text-align: left">Username or Email</label>
+          <input type="text" class="form-control" id="inputUsername" placeholder="Username" name="username">
+        </div>
+      <div class="form-group">
+        <label for="inputPassword">Password</label>
+        <input type="password" class="form-control" id="inputPassword" placeholder="Password" name="password">
+      </div>
+        <br>
+        <div align="center">
+            <button type="submit" class="btn btn-primary">Log in</button>
+        </div>
+    <br>
+    </form>
+    </div>
+{% endblock %}

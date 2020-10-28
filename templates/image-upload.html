@@ -1,10 +1,63 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}
+    Create Account
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1 style="color: lightcoral; background-color: floralwhite; text-align: center">
+            Almost there!
+        </h1>
+    </div>
+
+    <div class="container">
+        <div class="alert alert-success" role="alert" style="text-align: center">
+            Account created successfully!
+        </div>
+    </div>
+
+<div class="container">
+
+<form method="POST" enctype="multipart/form-data" style="align-content: center; margin-left: 20%; margin-right: 20%">{% csrf_token %}
+    <div class="form-group">
+        <div class="md-form amber-textarea active-amber-textarea">
+          <label>Write something about you within 280 characters...</label>
+          <textarea class="md-textarea form-control" rows="3" name="bio"></textarea>
+        </div>
+    </div>
+<div class="form-group">
+    <label for="customProfilePicture">
+        {% if profile_photo %}
+            {{ profile_photo }}
+        {% else %}
+            Upload your profile picture!
+        {% endif %}
+    </label>
+    <div class="custom-file">
+      <input type="file" accept="image/*" class="custom-file-input" id="profile_photo" name="profile_photo" value="profile_photo">
+      <label class="custom-file-label" for="customProfilePicture">Choose Image Files</label>
+    </div>
+</div>
+
+    <div class="form-group">
+        <label for="customHeaderPicture">
+            {% if header_photo %}
+                {{ header_photo }}
+            {% else %}
+                Upload your header photo!
+            {% endif %}
+        </label>
+        <div class="custom-file">
+          <input type="file" accept="image/*" class="custom-file-input" id="customHeaderPicture" name="header_photo" value="header_photo">
+          <label class="custom-file-label" for="customHeaderPicture">Choose Image Files</label>
+        </div>
+    </div>
+        <div align="center">
+            <button type="submit" class="btn btn-primary">Proceed</button>
+        </div>
+    </form>
+
+ </div>
+
+{% endblock %}
