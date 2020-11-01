@@ -1,0 +1,19 @@
+{% extends "skeleton.html" %}
+
+{% block skeleton_content %}
+
+<div class="container-fluid" style="display: block; position: relative">
+        <div style="display: block; position: relative; z-index:1;">
+{#            <img class="img-fluid" src="https://www.facebook.com/images/groups/groups-default-cover-photo-2x.png" style="max-width: 100%; z-index: 1">#}
+            <img class="img-fluid" src="{{ profile.header_phto }}" style="border-width: 5px; max-width: 100%; z-index: 1" alt="Header Photo">
+        </div>
+
+        <div style="display: block; position: relative; border-radius:50%; height: 200px; width: 200px; z-index: 999; margin: -10% 0 15% 5%;">
+{#            <img class="img-fluid" src="https://thumbs.dreamstime.com/b/default-avatar-profile-image-vector-social-media-user-icon-potrait-182347582.jpg" style="max-width: 100%; z-index: 999">#}
+              <img class="img-fluid" src="{{ profile.profile_photo }}" style="max-width: 100%; z-index: 999" alt="Profile Pic">
+        </div>
+
+
+</div>
+
+{% endblock %}

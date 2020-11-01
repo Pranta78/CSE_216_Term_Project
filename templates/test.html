@@ -1,5 +1,8 @@
-{% extends "base.html" %}
+{#{% extends "navbar.html" %}#}
+{% extends "skeleton.html" %}
 
-{% block content %}
-    <img src={{ img_path }} alt="No data found!">
+{% block skeleton_content %}
+    <img class="img-fluid" src={{ img_path }} alt="No data found!">
 {% endblock %}
+
+

@@ -1,0 +1,23 @@
+<div class="col-4 mx-auto">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">{{ tweet.author }}</h5>
+
+            {% if tweet.replied_to %}
+                <h6 class="card-subtitle mb-2 text-muted">Replying to {{ tweet.replied_to }}</h6>
+            {% endif %}
+
+            <h6 class="card-subtitle mb-2 text-muted">{{ tweet.date }}</h6>
+            {% if tweet.text %}
+                <p class="card-text">{{ tweet.text }}</p>
+            {% endif %}
+        </div>
+
+        {% if tweet.image %}
+            <img class="card-img-bottom" src="{{ tweet.image }}" alt="Card image cap">
+        {% endif %}
+
+
+
+    </div>
+</div>
