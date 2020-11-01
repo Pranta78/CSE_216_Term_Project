@@ -112,7 +112,45 @@ def profile_edit(request):
 
 
 def test(request):
-    img_path = 'file:///D:/twitter/download.png'
-    context = {"img_path": img_path}
+    img_path = 'https://www.facebook.com/images/groups/groups-default-cover-photo-2x.png'
+
+    context = {"img_path": img_path,
+               "username": "bla",
+               "user_id": 123,
+               "Test_is_active": True}
+
     template_name = "test.html"
+    return render(request, template_name, context)
+
+
+def navbar(request):
+    user_id = request.session.get("user_id", None)
+    username = request.session.get("username", None)
+
+    context = {"user_id": user_id,
+               "username": username}
+
+    template_name = "navbar.html"
+    return render(request, template_name, context)
+
+
+def profile(request):
+    user_id = request.session.get("user_id", None)
+    username = request.session.get("username", None)
+
+    context = {"user_id": user_id,
+               "username": username}
+
+    template_name = "profile.html"
+    return render(request, template_name, context)
+
+
+def skeleton(request):
+    user_id = request.session.get("user_id", None)
+    username = request.session.get("username", None)
+
+    context = {"user_id": user_id,
+               "username": username}
+
+    template_name = "skeleton.html"
     return render(request, template_name, context)
