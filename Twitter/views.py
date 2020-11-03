@@ -154,3 +154,51 @@ def skeleton(request):
 
     template_name = "skeleton.html"
     return render(request, template_name, context)
+
+
+def message(request):
+    user_id = request.session.get("user_id", None)
+    username = request.session.get("username", None)
+
+    # This will list all users, and hyperlink to the inbox and chat history to all users
+
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT ACCOUNTNAME FROM ACCOUNT;")
+        row = cursor.fetchall()
+        print("Printing User names...")
+        print(row)
+        userlist = [col[0] for col in row]
+        print("Printing User names pretty print...")
+        print(userlist)
+
+    context = {"user_id": user_id,
+               "username": username,
+               "userlist": userlist}
+
+    template_name = "message.html"
+    return render(request, template_name, context)
+
+
+def inbox(request, receiver):
+    print("In view of inbox with user "+receiver)
+    user_id = request.session.get("user_id", None)
+    username = request.session.get("username", None)
+
+    # This will list all messages with a particular user
+
+    # with connection.cursor() as cursor:
+    #     cursor.execute("SELECT ACCOUNTNAME FROM ACCOUNT;")
+    #     row = cursor.fetchall()
+    #     print("Printing User names...")
+    #     print(row)
+    #     userlist = [col[0] for col in row]
+    #     print("Printing User names pretty print...")
+    #     print(userlist)
+
+    context = {"user_id": user_id,
+               "username": username,
+               "receiver": receiver
+               }
+
+    template_name = "inbox.html"
+    return render(request, template_name, context)
