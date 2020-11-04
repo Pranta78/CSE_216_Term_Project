@@ -4,11 +4,11 @@
 
 <div class="container-fluid" style="display: block; position: relative">
         <div style="display: block; position: relative; z-index:1;">
-            <img class="img-fluid" src="{{ profile.header_photo|default:"https://www.facebook.com/images/groups/groups-default-cover-photo-2x.png"}}" style="border-width: 5px; max-width: 100%; z-index: 1" alt="Header Photo">
+            <img class="img-fluid" src="{{ header_photo|default:"https://www.facebook.com/images/groups/groups-default-cover-photo-2x.png"}}" style="border-width: 5px; max-width: 100%; z-index: 1" alt="Header Photo">
         </div>
 
         <div style="display: block; position: relative; border-radius:50%; height: 200px; width: 200px; z-index: 999; margin: -10% 0 0% 5%;">
-              <img class="img-fluid" src="{{ profile.profile_photo|default:"https://thumbs.dreamstime.com/b/default-avatar-profile-image-vector-social-media-user-icon-potrait-182347582.jpg"}}" style="max-width: 100%; z-index: 999" alt="Profile Pic">
+              <img class="img-fluid" src="{{ profile_photo|default:"https://thumbs.dreamstime.com/b/default-avatar-profile-image-vector-social-media-user-icon-potrait-182347582.jpg"}}" style="max-width: 100%; z-index: 999" alt="Profile Pic">
         </div>
 
         <div class="row">
@@ -19,13 +19,15 @@
              <div class="col-9">
                 <div class="btn-group mx-auto" style="float: right">
                   <button type="button" class="btn btn-primary">Follow</button>
-                  <button type="button" class="btn btn-primary">Message</button>
+                  <form method="get" action="/inbox/{{ username }}">
+                      <button type="button" class="btn btn-primary">Message</button>
+                  </form>
                 </div>
             </div>
         </div>
 
         <div class="row">
-            <p>{{ profile.bio|default:"User bio" }}</p>
+            <p>{{ bio|default:"User bio" }}</p>
         </div>
  </div>
 

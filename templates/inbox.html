@@ -2,4 +2,47 @@
 
 {% block skeleton_content %}
     <h1>{{ receiver }}</h1>
+
+<div class="container">
+
+    <ul class="list-group">
+        {% for message in messagelist %}
+            <li class="list-group-item {% if message.NAME == username %}active{% endif %}" style="text-align: {% if message.NAME == username %}right{% else %}left{% endif %}">
+            <h3>
+                {{ message.NAME }}
+            </h3>
+            <small>
+                {{ message.TIMESTAMP }}
+            </small>
+            <p>
+                {{ message.TEXT }}
+            </p>
+         </li>
+        {% endfor %}
+    </ul>
+
+    <br>
+
+    <form method="POST">{% csrf_token %}
+        <div class="form-group">
+            <div class="row">
+                <div class="col-6">
+                    <label for="exampleFormControlTextarea1" style="float: left">
+                        Send <b>{{ receiver }}</b> a message!
+                    </label>
+                </div>
+
+                <div class="col-6" align="right">
+                    <button type="submit" class="btn btn-primary">
+                        Send
+                    </button>
+                </div>
+            </div>
+
+           <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" placeholder="Type a message..." name="chatbox"></textarea>
+        </div>
+    <br>
+    </form>
+</div>
+
 {% endblock %}
