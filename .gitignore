@@ -1,3 +1,8 @@
-.idea 
+.idea
+.idea/
 venv
+venv/
 Twitter/__pycache__
+Twitter/__pycache__/
+*.xml
+*.iml
