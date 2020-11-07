@@ -1,23 +1,37 @@
-<div class="col-4 mx-auto">
-    <div class="card">
-        <div class="card-body">
-            <h5 class="card-title">{{ tweet.author }}</h5>
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">{{ tweet.AUTHOR }}</h5>
+        <p class="card-text"><small class="text-muted">{{ tweet.TIMESTAMP }}</small></p>
 
-            {% if tweet.replied_to %}
-                <h6 class="card-subtitle mb-2 text-muted">Replying to {{ tweet.replied_to }}</h6>
-            {% endif %}
-
-            <h6 class="card-subtitle mb-2 text-muted">{{ tweet.date }}</h6>
-            {% if tweet.text %}
-                <p class="card-text">{{ tweet.text }}</p>
-            {% endif %}
-        </div>
-
-        {% if tweet.image %}
-            <img class="card-img-bottom" src="{{ tweet.image }}" alt="Card image cap">
+        {% if tweet.replied_to %}
+            <h6 class="card-subtitle mb-2 text-muted">Replying to {{ tweet.replied_to }}</h6>
         {% endif %}
 
+        {% if tweet.TEXT %}
+            <p class="card-text">{{ tweet.TEXT }}</p>
+        {% endif %}
+    </div>
 
+    {% if tweet.image %}
+        <img class="card-img-bottom" src="{{ tweet.image }}" alt="Card image">
+    {% endif %}
+
+    <div class="btn-group">
+{#        <button type="button" class="btn btn-primary">Retweet</button>#}
+{#        <button type="button" class="btn btn-secondary">Comment</button>#}
+{#        <button type="button" class="btn btn-success">Like</button>#}
+{#        <button type="button" class="btn btn-secondary">Bookmark</button>#}
+{##}
+{#        <button class="btn"><i class="fa fa-home"></i> Home</button>#}
+{#        <button class="btn"><i class="fa fa-bars"></i> Menu</button>#}
+{#        <button class="btn"><i class="fa fa-trash"></i> Trash</button>#}
+{#        <button class="btn"><i class="fa fa-close"></i> Close</button>#}
+{#        <button class="btn"><i class="fa fa-folder"></i> Folder</button>#}
+
+        <button class="btn"><i class="fa fa-reply"></i> Retweet</button>
+        <button class="btn"><i class="fa fa-comment-o"></i> Comment</button>
+        <button class="btn"><i class="fa fa-heart-o"></i> Like</button>
+        <button class="btn"><i class="fa fa-bookmark-o"></i> Bookmark</button>
 
     </div>
 </div>

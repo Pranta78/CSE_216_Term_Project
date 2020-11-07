@@ -79,13 +79,43 @@ def logout(request):
 
 
 def home_page(request):
+    # user_id = request.session.get("user_id", None)
+    # username= request.session.get("username", None)
+    #
+    # context = {"user_id": user_id,
+    #            "username": username}
+    #
+    # template_name = "home_page.html"
+
     user_id = request.session.get("user_id", None)
-    username= request.session.get("username", None)
+    username = request.session.get("username", None)
+
+    # All tweets from all people the user follows will be shown in reverse chronological order
+    tweetlist = None
+
+    with connection.cursor() as cursor:
+        cursor.execute(f'''SELECT P.ID, P.TEXT, P.TIMESTAMP,
+                    (SELECT ACCOUNTNAME FROM ACCOUNT A WHERE A.ID=APP.ACCOUNT_ID) AUTHOR
+                    FROM POST P JOIN TWEET T
+                    ON (P.ID = T.POST_ID)
+                    JOIN ACCOUNT_POSTS_POST	APP
+                    ON (T.POST_ID = APP.POST_ID)
+                    JOIN FOLLOW_NOTIFICATION FN
+                    ON (APP.ACCOUNT_ID = FN.FOLLOWED_ACCOUNT_ID)
+                    JOIN ACCOUNT_FOLLOWS_ACCOUNT AFA
+                    ON (FN.FOLLOW_NOTIFICATION_ID = AFA.F_NOTIFICATION_ID)
+                    WHERE AFA.ACCOUNT_ID = {user_id}
+                    ORDER BY P.TIMESTAMP DESC;''')
+
+        tweetlist = dictfetchall(cursor)
+        print("Printing tweetlist: ")
+        print(tweetlist)
 
     context = {"user_id": user_id,
-               "username": username}
+               "username": username,
+               "tweet_list": tweetlist}
 
-    template_name = "home_page.html"
+    template_name = "home.html"
 
     return render(request, template_name, context)
 
@@ -138,8 +168,79 @@ def profile(request):
     user_id = request.session.get("user_id", None)
     username = request.session.get("username", None)
 
+    # if request.POST and request.POST.get("follow", None):
+    #     with connection.cursor() as cursor:
+    #         data = cursor.callproc('INSERT_FOLLOW_NOTIF', (username, password, 'default' * 30, user_id, 'default' * 10))
+    #         cursor.execute(f'''SELECT M.TEXT, M.TIMESTAMP, M.SEEN,
+    #                         (SELECT ACCOUNTNAME FROM ACCOUNT A WHERE A.ID=ASM.ACCOUNT_ID) NAME
+    #                         FROM ACCOUNT_SENDS_MESSAGE ASM JOIN ACCOUNT_RECEIVES_MESSAGE ARM
+    #                         ON(ASM.MESSAGE_ID = ARM.MESSAGE_ID)
+    #                         JOIN MESSAGE M
+    #                         ON(ARM.MESSAGE_ID = M.ID)
+    #                         WHERE
+    #                         (ASM.ACCOUNT_ID={user_id} AND ARM.ACCOUNT_ID={receiver_id})
+    #                         OR
+    #                         (ARM.ACCOUNT_ID={user_id} AND ASM.ACCOUNT_ID={receiver_id})
+    #
+    #                         ORDER BY TIMESTAMP ASC;''')
+
     context = {"user_id": user_id,
                "username": username}
+
+    template_name = "profile.html"
+    return render(request, template_name, context)
+
+
+def user_profile(request, profilename):
+    # shows profile for any particular user
+    user_id = request.session.get("user_id", None)
+    username = request.session.get("username", None)
+
+    profile_id = None
+
+    with connection.cursor() as cursor:
+        cursor.execute(f"SELECT ID FROM ACCOUNT WHERE ACCOUNTNAME = '{profilename}';")
+        row = cursor.fetchone()
+
+        if len(row) == 0:
+            return HttpResponse("<h2>Invalid User profile!</h2>")
+        else:
+            profile_id = row[0]
+
+    # The follow button will be disabled if the profile user is followed by the logged in user!
+    follows_user = None
+
+    with connection.cursor() as cursor:
+        cursor.execute(f'''SELECT COUNT(*)
+                        FROM ACCOUNT_FOLLOWS_ACCOUNT
+                        WHERE ACCOUNT_ID = {user_id}
+                        AND 
+                        F_NOTIFICATION_ID = 
+                            (SELECT FOLLOW_NOTIFICATION_ID
+                            FROM FOLLOW_NOTIFICATION
+                            WHERE FOLLOWED_ACCOUNT_ID = {profile_id});''')
+        row = cursor.fetchone()
+
+        # if user is visiting his own profile
+        if row[0] != 0 or (username == profilename):
+            follows_user = True
+
+    if request.POST:
+        with connection.cursor() as cursor:
+            data = cursor.callproc('INSERT_FOLLOW_NOTIF', (username, profilename, 'default'*30))
+
+            if data[2] == 'OK':
+                print("Follow successful!")
+                follows_user = True
+            else:
+                print("ERROR FOLLOWING USER!")
+                print(data[2])
+
+    context = {"user_id": user_id,
+               "username": username,
+               "profile_id": profile_id,
+               "profile_name": profilename,
+               "follows_user": follows_user}
 
     template_name = "profile.html"
     return render(request, template_name, context)

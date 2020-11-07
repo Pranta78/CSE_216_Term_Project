@@ -17,7 +17,7 @@ from django.contrib import admin
 from django.conf.urls import url
 from .views import (create_account, login, home_page,
                     profile_edit, test, logout, navbar, profile,
-                    skeleton, message, inbox)
+                    skeleton, message, inbox, user_profile)
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
@@ -31,5 +31,6 @@ urlpatterns = [
     url(r'^navbar/', navbar),
     url(r'^skeleton/', skeleton),
     url(r'^messages/', message),
+    url(r'^user/(\w+)/$', user_profile, name='user_profile'),
     url(r'^inbox/(\w+)/$', inbox, name='user_inbox'),
 ]

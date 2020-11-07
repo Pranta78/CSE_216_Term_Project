@@ -13,13 +13,21 @@
 
         <div class="row">
             <div class="col-3" style="float: left">
-                <h2>{{ username|default:"Default" }}</h2>
+                <h2>{{ profile_name|default:"Default" }}</h2>
             </div>
 
              <div class="col-9">
                 <div class="btn-group mx-auto" style="float: right">
-                  <button type="button" class="btn btn-primary">Follow</button>
-                  <form method="get" action="/inbox/{{ username }}">
+                  <form method="post">{% csrf_token %}
+                      <button type="submit" class="btn {% if follows_user %}disabled{% else %}btn-primary{% endif %}" name="follow">
+                          {% if follows_user %}
+                            Following
+                          {% else %}
+                            Follow
+                          {% endif %}
+                      </button>
+                  </form>
+                  <form method="get" action="/inbox/{{ profile_name }}">
                       <button type="button" class="btn btn-primary">Message</button>
                   </form>
                 </div>
