@@ -143,7 +143,8 @@ def profile_edit(request):
 
 def test(request):
     img_path = 'https://www.facebook.com/images/groups/groups-default-cover-photo-2x.png'
-
+    #comment for testing commit
+    #Just download the uploaded images in the templates folder no need for static path.
     context = {"img_path": img_path,
                "username": "bla",
                "user_id": 123,
