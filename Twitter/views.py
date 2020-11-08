@@ -222,6 +222,13 @@ def profile(request):
     user_id = request.session.get("user_id", None)
     username = request.session.get("username", None)
 
+    # user must be logged in
+    if not user_id:
+        return render(request, "profile.html", {"user_id": user_id,
+                                                "username": username})
+
+    return user_profile(request, username)
+
     # if request.POST and request.POST.get("follow", None):
     #     with connection.cursor() as cursor:
     #         data = cursor.callproc('INSERT_FOLLOW_NOTIF', (username, password, 'default' * 30, user_id, 'default' * 10))
