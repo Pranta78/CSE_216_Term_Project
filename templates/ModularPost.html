@@ -1,19 +1,30 @@
+<!--This works for both tweet and comment hence renamed to post -->
+
+<!-- These are necessary if you want to use this separately for debugging purposes-->
+{% extends "base.html" %}
+{% block content %}
+<!-- end-->
+
 <div class="card">
     <div class="card-body">
-        <h5 class="card-title">{{ tweet.AUTHOR }}</h5>
-        <p class="card-text"><small class="text-muted">{{ tweet.TIMESTAMP }}</small></p>
+        <h5 class="card-title">{{ post.AUTHOR }}
+            <small>
+                    @{{ post.AUTHOR  }}
+            </small>
+        </h5>
+        <p class="card-text"><small class="text-muted">{{ post.TIMESTAMP }}</small></p>
 
-        {% if tweet.replied_to %}
-            <h6 class="card-subtitle mb-2 text-muted">Replying to {{ tweet.replied_to }}</h6>
+        {% if post.replied_to %}
+            <h6 class="card-subtitle mb-2 text-muted">Replying to {{ post.replied_to }}</h6>
         {% endif %}
 
-        {% if tweet.TEXT %}
-            <p class="card-text">{{ tweet.TEXT }}</p>
+        {% if post.TEXT %}
+            <p class="card-text">{{ post.TEXT }}</p>
         {% endif %}
     </div>
 
-    {% if tweet.image %}
-        <img class="card-img-bottom" src="{{ tweet.image }}" alt="Card image">
+    {% if post.image %}
+        <img class="card-img-bottom" src="{{ post.MEDIA }}" alt="Card image">
     {% endif %}
 
     <div class="btn-group">
@@ -35,3 +46,4 @@
 
     </div>
 </div>
+{% endblock %}

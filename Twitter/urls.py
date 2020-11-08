@@ -19,6 +19,8 @@ from .views import (create_account, login, home_page,
                     profile_edit, test, logout, navbar, profile,
                     skeleton, message, inbox, user_profile)
 
+from .tweet_view import detailedTweetView, createTweet
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^create-account/', create_account),
@@ -33,4 +35,6 @@ urlpatterns = [
     url(r'^messages/', message),
     url(r'^user/(\w+)/$', user_profile, name='user_profile'),
     url(r'^inbox/(\w+)/$', inbox, name='user_inbox'),
+    url(r'^create/tweet/', createTweet),
+    url(r'^tweet/(?P<tweetID>\w+)/$', detailedTweetView, name='detailedTweetView'),
 ]

@@ -1,7 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
-
+    <!--
+    auth should not happen in template, redirect to login outside in View
+    Do not couple login with templates
+    The this was before, the skeleton was unusable to view tweets without login in the tweetdetailview
+    Which any social site lets you do.
+    The skeleton is useful. But it should only contain the navbar and the side bar
+    -->
 {% if not user_id %}
 
     <div class="container" align="center">
