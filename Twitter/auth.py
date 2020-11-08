@@ -1,7 +1,7 @@
 # utility class for authentication, provides a simple function for quick login redirect
 # just put the decorator auth_or_redirect on top of view functions that require auth
 # cleaner and doesn't involve templates
-# view shouldn't contain auth logic to begin with.
+# and doesn't work against post requests that require authentication
 
 # I also recommend moving login logout logic here. But that's on you.
 
@@ -12,7 +12,7 @@ from django.urls import reverse
 
 
 def is_user_authenticated(request):
-    return request.session.get("user_id", None) is None
+    return request.session.get("user_id", None) is not None
 
 
 def auth_or_redirect(func):

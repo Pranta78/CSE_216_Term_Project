@@ -1,10 +1,15 @@
 {% extends "skeleton.html" %}
-
+<!--the modular post html should not concern itself with showing comments -->
 {% block skeleton_content %}
     {% include "ModularPost.html" with post=tweet %}
+    <!-- TODO make comments smaller??-->
+    {% for comment in comments %}
+        {% include "ModularPost.html" with post=comment %}
+    {% endfor %}
 
+    <!--TODO make this fixed to the bottom of the screen so that user doesn't have to scroll -->
     {% if USERLOGGEDIN %}
-        <form method="POST" action = "/create/tweet/">{% csrf_token %}
+        <form method="POST" action = "/create/reply/tweet/{{ TWEETID }}/">{% csrf_token %}
 
             <div class="col-8">
                 <div class="form-row">
@@ -19,8 +24,7 @@
                     This should be an attribute for tweet, not post base entity
                     -->
                     <select name="privacy" id="privacyDropDown">
-                        <option selected>Choose Audience</option>
-                        <option value="PUBLIC">Public</option>
+                        <option value="PUBLIC" selected="selected">Public</option>
                         <option value="FOLLOWER">Follower</option>
                         <option value="MENTION">Mention</option>
                     </select>
