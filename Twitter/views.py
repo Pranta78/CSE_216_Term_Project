@@ -90,6 +90,11 @@ def home_page(request):
     user_id = request.session.get("user_id", None)
     username = request.session.get("username", None)
 
+    # user must be logged in
+    if not user_id:
+        return render(request, "profile.html", {"user_id": user_id,
+                                                "username": username})
+
     # All tweets from all people the user follows will be shown in reverse chronological order
     tweetlist = None
 
@@ -195,6 +200,11 @@ def user_profile(request, profilename):
     # shows profile for any particular user
     user_id = request.session.get("user_id", None)
     username = request.session.get("username", None)
+
+    # user must be logged in
+    if not user_id:
+        return render(request, "profile.html", {"user_id": user_id,
+                                                "username": username})
 
     profile_id = None
 
