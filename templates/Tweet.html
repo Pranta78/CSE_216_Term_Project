@@ -27,11 +27,27 @@
 {#        <button class="btn"><i class="fa fa-trash"></i> Trash</button>#}
 {#        <button class="btn"><i class="fa fa-close"></i> Close</button>#}
 {#        <button class="btn"><i class="fa fa-folder"></i> Folder</button>#}
+        <form method="post">{% csrf_token %}
 
-        <button class="btn"><i class="fa fa-reply"></i> Retweet</button>
-        <button class="btn"><i class="fa fa-comment-o"></i> Comment</button>
-        <button class="btn"><i class="fa fa-heart-o"></i> Like</button>
-        <button class="btn"><i class="fa fa-bookmark-o"></i> Bookmark</button>
+            <input type="hidden" value={{ tweet.ID }} name="tweetID">
+            <input type="hidden" value={{ index }} name="indexID">
+
+        <div class="form-group">
+            <button class="btn"><i class="fa fa-reply"></i> Retweet</button>
+            <button class="btn"><i class="fa fa-comment-o"></i> Comment</button>
+            <button type="submit" class="btn" name="like" value="like"><i class="fa fa-heart{% if not tweet.LIKED %}-o{% endif %}" {% if tweet.LIKED %}style="color: rgb(224,36,94);" {% endif %}></i>
+                {% if not tweet.LIKED %}
+                    Like
+                {% endif %}
+            </button>
+            <button type="submit" class="btn" name="bookmark" value="bookmark"><i class="fa fa-bookmark{% if not tweet.BOOKMARKED %}-o{% endif %}"></i>
+                {% if not tweet.BOOKMARKED %}
+                    Bookmark
+                {% endif %}
+            </button>
+        </div>
+
+        </form>
 
     </div>
 </div>

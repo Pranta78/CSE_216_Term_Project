@@ -30,7 +30,7 @@
         <div class="col-8">
 {#        <ul class="list-group">#}
             {% for tweet in tweet_list %}
-                {% include 'Tweet.html' with tweet=tweet %}
+                {% include 'Tweet.html' with tweet=tweet index=forloop.counter0 %}
             {% endfor %}
 {#        </ul>#}
         </div>
