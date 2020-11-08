@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from django.db import connection
 from django.shortcuts import render, redirect
-
+from .auth import auth_or_redirect
 
 def create_account(request):
     message = ''
@@ -67,7 +67,7 @@ def login(request):
 
     return render(request, template_name, context)
 
-
+@auth_or_redirect
 def logout(request):
     print("logging you out!")
     try:
@@ -77,7 +77,7 @@ def logout(request):
         print('Key Error in Logout!')
     return redirect("/login")
 
-
+@auth_or_redirect
 def home_page(request):
     # user_id = request.session.get("user_id", None)
     # username= request.session.get("username", None)
@@ -119,7 +119,7 @@ def home_page(request):
 
     return render(request, template_name, context)
 
-
+@auth_or_redirect
 def profile_edit(request):
     profile_photo = None
     header_photo = None
@@ -191,7 +191,7 @@ def profile(request):
     template_name = "profile.html"
     return render(request, template_name, context)
 
-
+@auth_or_redirect
 def user_profile(request, profilename):
     # shows profile for any particular user
     user_id = request.session.get("user_id", None)
@@ -257,7 +257,7 @@ def skeleton(request):
     template_name = "skeleton.html"
     return render(request, template_name, context)
 
-
+@auth_or_redirect
 def message(request):
     user_id = request.session.get("user_id", None)
     username = request.session.get("username", None)
@@ -280,7 +280,7 @@ def message(request):
     template_name = "message.html"
     return render(request, template_name, context)
 
-
+@auth_or_redirect
 def inbox(request, receiver):
     print("In view of inbox with user "+receiver)
 

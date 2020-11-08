@@ -2,21 +2,17 @@ from django.http import HttpResponse
 from django.db import connection
 from django.shortcuts import render, redirect
 from django.urls import reverse
-#working on the same view.py file together is a recipe for merge conflicts
+
+from .auth import auth_or_redirect, is_user_authenticated
+
+#Working on the same view.py file together is a recipe for merge conflicts
 #I have separated the tweet part into a different py file.
 #Ideally, this should be a separate app but this is sufficient for now
 #It'd be best if you separate your stuff as well
 
-def test(request):
-    img_path = 'file:///D:/twitter/download.png'
-    context = {"img_path": img_path}
-    template_name = "test.html"
-    return render(request, template_name, context)
-
-def createTweet(request):
+@auth_or_redirect
+def create_tweet(request):
     if request.POST:
-        if request.session['user_id'] is None:
-            return redirect("/login")
         user_id = request.session['user_id']
         tweetBody = request.POST.get("TweetBody", None)
         media = request.POST.get("Media", None)
@@ -38,7 +34,10 @@ def createTweet(request):
         return HttpResponse("something went wrong during tweet submission")
 
 
-def detailedTweetView(request, tweetID):
+
+
+#no need for auth outside of ability to comment
+def detailed_tweet_view(request, tweetID):
     print("TWEET %s" % tweetID)
     with connection.cursor() as cursor:
         cursor.execute("SELECT a.ACCOUNTNAME, a.PROFILE_PHOTO,  p.TEXT, p.MEDIA, p.TIMESTAMP "
@@ -54,17 +53,19 @@ def detailedTweetView(request, tweetID):
         if result is not None:
             tweet = {
                 "AUTHOR": result[0],
-                "userphoto": result[1],
+                "AUTHORPHOTO": result[1],
                 "TEXT": result[2],
                 "MEDIA": result[3],
                 "TIMESTAMP": result[4]
-            }#your setup requires a separarte tweet object
+            }#your setup requires a separate tweet object
+            #would also be nice to set project rules for template context strings(i.e should they be full caps or not)
 
             context = {
                 "tweet": tweet,
+                "TWEETID": tweetID,#use for generating link for comment reply button
+                "USERLOGGEDIN": is_user_authenticated(),
             }
             print(context)
-            print(request.u)
             return render(request, "DetailedTweetView.html", context)
 
     return HttpResponse("TWEET DOES NOT EXIST")
