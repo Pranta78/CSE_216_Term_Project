@@ -1,5 +1,7 @@
 .idea
 .idea/
+media
+media/
 venv
 venv/
 Twitter/__pycache__

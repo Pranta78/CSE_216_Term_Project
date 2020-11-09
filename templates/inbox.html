@@ -6,7 +6,7 @@
 <div class="container-fluid">
     <ul class="list-group">
         {% for message in messagelist %}
-            <li class="list-group-item " style="text-align: {% if message.NAME == username %}right{% else %}left{% endif %}">
+            <li class="list-group-item" style="text-align: {% if message.NAME == username %}right{% else %}left{% endif %}">
 
             {% if message.NAME == username %}
                 <small>{{ message.TIMESTAMP }}</small>
@@ -15,6 +15,8 @@
 
                 {% if message.TEXT %}
                     <p>{{ message.TEXT }}</p>
+                {% else %}
+                    <p>     </p>
                 {% endif %}
 
                 {% if message.MEDIA %}
@@ -28,6 +30,8 @@
 
                 {% if message.TEXT %}
                     <p>{{ message.TEXT }}</p>
+                {% else %}
+                    <p>     </p>
                 {% endif %}
 
                 {% if message.MEDIA %}
@@ -65,7 +69,6 @@
 
            <textarea class="form-control" id="chatInput" rows="3" placeholder="Type a message..." name="chatbox" style="resize: none;" maxlength="280"></textarea>
         </div>
-    <br>
     </form>
 
     <script>
