@@ -1,0 +1,90 @@
+{% extends "skeleton.html" %}
+
+{% load static %}
+
+{% block skeleton_content %}
+
+<div class="container-fluid">
+    <h1 style="color: lightcoral; background-color: floralwhite; text-align: center">
+        Update your profile!
+    </h1>
+</div>
+
+    <br>
+
+<div class="container-fluid">
+
+    <form method="POST" enctype="multipart/form-data" style="align-content: center; margin-left: 20%; margin-right: 20%">{% csrf_token %}
+        <div class="form-group">
+            <div class="md-form amber-textarea active-amber-textarea">
+              <label style="float: left">Write something about you!</label>
+              <label style="float: right" id="counter">280 characters left</label>
+              <textarea class="md-textarea form-control" rows="3" name="bio" id="bio" maxlength="280"></textarea>
+            </div>
+        </div>
+    
+        <div class="form-group">
+            <img class="img-fluid" src="{{ profile_photo|default:"https://thumbs.dreamstime.com/b/default-avatar-profile-image-vector-social-media-user-icon-potrait-182347582.jpg"}}" id="profile_pic_preview" style="align-content: center">
+            <div class="custom-file">
+              <input type="file" accept="image/*" class="custom-file-input" id="profile_photo" name="profile_photo" value="profile_photo">
+              <label class="custom-file-label" for="customProfilePicture">Choose Image Files</label>
+            </div>
+        </div>
+    
+        <div class="form-group">
+            <div class="container" align="center">
+                <img class="img-thumbnail" src="{{ header_photo|default:"https://www.facebook.com/images/groups/groups-default-cover-photo-2x.png"}}" id="header_pic_preview">
+            </div>
+
+            <div class="custom-file">
+              <input type="file" accept="image/*" class="custom-file-input" id="header_photo" name="header_photo" value="header_photo">
+              <label class="custom-file-label" for="customHeaderPicture">Choose Image Files</label>
+            </div>
+        </div>
+            <div align="center">
+                <button type="submit" class="btn btn-primary">Proceed</button>
+            </div>
+        <br>
+
+    </form>
+
+ </div>
+
+    <script>
+        document.getElementById("bio").oninput = function(){
+            let bio = document.getElementById("bio");
+            let counter = document.getElementById("counter");
+
+            counter.textContent = (280-bio.textLength) + " characters left";
+        }
+
+        document.getElementById("profile_photo").onchange = function () {
+            let reader = new FileReader();
+
+            reader.onload = function (e) {
+                // get loaded data and render thumbnail.
+                document.getElementById("profile_pic_preview").src = e.target.result;
+            };
+
+            // read the image file as a data URL.
+            reader.readAsDataURL(this.files[0]);
+        };
+
+        document.getElementById("header_photo").onchange = function () {
+            let reader = new FileReader();
+
+            reader.onload = function (e) {
+                // get loaded data and render thumbnail.
+                document.getElementById("header_pic_preview").src = e.target.result;
+            };
+
+            // read the image file as a data URL.
+            reader.readAsDataURL(this.files[0]);
+        };
+    </script>
+
+    {% if url %}
+        <img src="{{ url }}" class="img-fluid" alt="{{ url }}">
+    {% endif %}
+
+{% endblock %}

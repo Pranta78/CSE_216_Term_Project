@@ -15,6 +15,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.conf.urls import url
+from django.conf import settings
+from django.conf.urls.static import static
 from .views import (create_account, login, home_page,
                     profile_edit, test, logout, navbar, profile,
                     skeleton, message, inbox, user_profile)
@@ -42,3 +44,6 @@ urlpatterns = [
     url(r'^tweet/(?P<tweetID>\w+)/$', detailed_tweet_view, name='detailedTweetView'),
     url(r'^decotest/', deco_test),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
