@@ -77,7 +77,6 @@ def logout(request):
         print('Key Error in Logout!')
     return redirect("/login")
 
-
 def home_page(request):
     # user_id = request.session.get("user_id", None)
     # username= request.session.get("username", None)
