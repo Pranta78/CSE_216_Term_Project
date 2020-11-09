@@ -126,7 +126,7 @@ def home_page(request):
         print(tweetlist)
 
     if request.POST.get("like", None):
-        tweetID = int(request.POST.get("tweetID", None))
+        tweetID = int(request.POST.get("postID", None))
         index = int(request.POST.get("indexID", None))
         print("\t Like was called for tweet ID "+str(tweetID)+", index= "+str(index))
         # got user input, now update the database
@@ -143,7 +143,7 @@ def home_page(request):
                 tweetlist[index]["LIKED"] = True
 
     if request.POST.get("bookmark", None):
-        tweetID = int(request.POST.get("tweetID", None))
+        tweetID = int(request.POST.get("postID", None))
         index = int(request.POST.get("indexID", None))
         print("\t Bookmark was called for tweet ID " + str(tweetID) + ", index= " + str(index))
         # got user input, now update the database

@@ -28,21 +28,26 @@
     {% endif %}
 
     <div class="btn-group">
-{#        <button type="button" class="btn btn-primary">Retweet</button>#}
-{#        <button type="button" class="btn btn-secondary">Comment</button>#}
-{#        <button type="button" class="btn btn-success">Like</button>#}
-{#        <button type="button" class="btn btn-secondary">Bookmark</button>#}
-{##}
-{#        <button class="btn"><i class="fa fa-home"></i> Home</button>#}
-{#        <button class="btn"><i class="fa fa-bars"></i> Menu</button>#}
-{#        <button class="btn"><i class="fa fa-trash"></i> Trash</button>#}
-{#        <button class="btn"><i class="fa fa-close"></i> Close</button>#}
-{#        <button class="btn"><i class="fa fa-folder"></i> Folder</button>#}
+        <form method="post">{% csrf_token %}
+            <input type="hidden" value={{ post.ID }} name="postID">
+            <input type="hidden" value={{ index }} name="indexID">
 
-        <button class="btn"><i class="fa fa-reply"></i> Retweet</button>
-        <button class="btn"><i class="fa fa-comment-o"></i> Comment</button>
-        <button class="btn"><i class="fa fa-heart-o"></i> Like</button>
-        <button class="btn"><i class="fa fa-bookmark-o"></i> Bookmark</button>
+        <div class="form-group">
+            <button class="btn"><i class="fa fa-reply"></i> Retweet</button>
+            <button class="btn"><i class="fa fa-comment-o"></i> Comment</button>
+            <button type="submit" class="btn" name="like" value="like"><i class="fa fa-heart{% if not post.LIKED %}-o{% endif %}" {% if post.LIKED %}style="color: rgb(224,36,94);" {% endif %}></i>
+                {% if not post.LIKED %}
+                    Like
+                {% endif %}
+            </button>
+            <button type="submit" class="btn" name="bookmark" value="bookmark"><i class="fa fa-bookmark{% if not post.BOOKMARKED %}-o{% endif %}"></i>
+                {% if not post.BOOKMARKED %}
+                    Bookmark
+                {% endif %}
+            </button>
+        </div>
+
+        </form>
 
     </div>
 </div>
