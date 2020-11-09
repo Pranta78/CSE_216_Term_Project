@@ -108,8 +108,56 @@ def home_page(request):
                     ORDER BY P.TIMESTAMP DESC;''')
 
         tweetlist = dictfetchall(cursor)
+        for tweet in tweetlist:
+            with connection.cursor() as cursor:
+                cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={tweet['ID']};")
+                count = cursor.fetchone()[0]
+
+                if count == 1:
+                    tweet["LIKED"] = True
+
+                cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_BOOKMARKS_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={tweet['ID']};")
+                count = cursor.fetchone()[0]
+
+                if count == 1:
+                    tweet["BOOKMARKED"] = True
+
         print("Printing tweetlist: ")
         print(tweetlist)
+
+    if request.POST.get("like", None):
+        tweetID = int(request.POST.get("tweetID", None))
+        index = int(request.POST.get("indexID", None))
+        print("\t Like was called for tweet ID "+str(tweetID)+", index= "+str(index))
+        # got user input, now update the database
+        with connection.cursor() as cursor:
+            # if liked, then unlike, if not liked, then add to like list
+            if tweetlist[index].get("LIKED", None):
+                cursor.execute(f"DELETE FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={tweetID};")
+                connection.commit()
+                tweetlist[index]["LIKED"] = None
+
+            else:
+                cursor.execute(f"INSERT INTO ACCOUNT_LIKES_POST VALUES({user_id}, {tweetID});")
+                connection.commit()
+                tweetlist[index]["LIKED"] = True
+
+    if request.POST.get("bookmark", None):
+        tweetID = int(request.POST.get("tweetID", None))
+        index = int(request.POST.get("indexID", None))
+        print("\t Bookmark was called for tweet ID " + str(tweetID) + ", index= " + str(index))
+        # got user input, now update the database
+        with connection.cursor() as cursor:
+            # if liked, then unlike, if not liked, then add to like list
+            if tweetlist[index].get("BOOKMARKED", None):
+                cursor.execute(f"DELETE FROM ACCOUNT_BOOKMARKS_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={tweetID};")
+                connection.commit()
+                tweetlist[index]["BOOKMARKED"] = None
+
+            else:
+                cursor.execute(f"INSERT INTO ACCOUNT_BOOKMARKS_POST VALUES({user_id}, {tweetID});")
+                connection.commit()
+                tweetlist[index]["BOOKMARKED"] = True
 
     context = {"user_id": user_id,
                "username": username,
