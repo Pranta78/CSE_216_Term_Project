@@ -2,22 +2,37 @@
 
 {% block skeleton_content %}
 
-<div class="container-fluid" style="display: block; position: relative">
-        <div style="display: block; position: relative; z-index:1;">
-            <img class="img-fluid" src="{{ header_photo|default:"https://www.facebook.com/images/groups/groups-default-cover-photo-2x.png"}}" style="border-width: 5px; max-width: 100%; z-index: 1" alt="Header Photo">
-        </div>
+{#<div class="container-fluid" style="display: block; position: relative">#}
+<div class="container-fluid">
 
-        <div style="display: block; position: relative; border-radius:50%; height: 200px; width: 200px; z-index: 999; margin: -10% 0 0% 5%;">
-              <img class="img-fluid" src="{{ profile_photo|default:"https://thumbs.dreamstime.com/b/default-avatar-profile-image-vector-social-media-user-icon-potrait-182347582.jpg"}}" style="max-width: 100%; z-index: 999" alt="Profile Pic">
-        </div>
+    <div class="row">
+       <div class="container" style="display: block; position: relative">
 
-        <div class="row">
-            <div class="col-3" style="float: left">
-                <h2>{{ profile_name|default:"Default" }}</h2>
+            <div style="display: block; position: relative; z-index:1;">
+                <img class="img-thumbnail" src="{{ header_photo|default:"https://www.facebook.com/images/groups/groups-default-cover-photo-2x.png"}}" style="border: 5px solid #5b80b2; border-radius: 2%; max-width: 100%; z-index: 1;" alt="Header Photo">
             </div>
 
-             <div class="col-9">
-                <div class="btn-group mx-auto" style="float: right">
+            <div style="display: block; position: relative; height: 200px; width: 200px; z-index: 999; margin: -10% 0 0% 5%;">
+                  <img class="img-fluid" src="{{ profile_photo|default:"https://thumbs.dreamstime.com/b/default-avatar-profile-image-vector-social-media-user-icon-potrait-182347582.jpg"}}" style="border: 5px solid #555; border-radius: 50%;max-width: 100%; z-index: 999;" alt="Profile Pic">
+            </div>
+
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-3" style="float: left">
+            <h2>{{ profile_name|default:"Default" }}</h2>
+        </div>
+
+         <div class="col-9">
+            <div class="btn-group mx-auto" style="float: right">
+
+              {% if self_profile %}
+                  <form action="/profile-edit/">
+                    <button type="submit" class="btn btn-primary">Edit Profile</button>
+                  </form>
+
+              {% else %}
                   <form method="post">{% csrf_token %}
                       <button type="submit" class="btn {% if follows_user %}disabled{% else %}btn-primary{% endif %}" name="follow">
                           {% if follows_user %}
@@ -27,16 +42,20 @@
                           {% endif %}
                       </button>
                   </form>
-                  <form method="get" action="/inbox/{{ profile_name }}">
-                      <button type="button" class="btn btn-primary">Message</button>
-                  </form>
-                </div>
+              {% endif %}
+
+              <form action="/inbox/{{ profile_name }}/">
+                  <button type="submit" class="btn btn-primary">Message</button>
+              </form>
+
             </div>
         </div>
+    </div>
 
-        <div class="row">
-            <p>{{ bio|default:"User bio" }}</p>
-        </div>
+    <div class="row">
+        <p>{{ bio|default:"No bio available" }}</p>
+    </div>
+
  </div>
 
 

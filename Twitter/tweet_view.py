@@ -18,7 +18,7 @@ def create_tweet(request):
         media = request.POST.get("Media", None)
         
         allowed_accounts = request.POST.get("privacy", None)
-        if allowed_accounts is None:
+        if allowed_accounts is None or allowed_accounts == 'Choose Audience':
             allowed_accounts = "PUBLIC"
         else:
             allowed_accounts = allowed_accounts.upper()

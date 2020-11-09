@@ -19,26 +19,33 @@
             <div class="md-form amber-textarea active-amber-textarea">
               <label style="float: left">Write something about you!</label>
               <label style="float: right" id="counter">280 characters left</label>
-              <textarea class="md-textarea form-control" rows="3" name="bio" id="bio" maxlength="280"></textarea>
+              <textarea class="md-textarea form-control" rows="3" name="bio" id="bio" maxlength="280" placeholder="Write your bio!">{% if bio %}{{ bio }}{% endif %}</textarea>
             </div>
         </div>
     
         <div class="form-group">
-            <img class="img-fluid" src="{{ profile_photo|default:"https://thumbs.dreamstime.com/b/default-avatar-profile-image-vector-social-media-user-icon-potrait-182347582.jpg"}}" id="profile_pic_preview" style="align-content: center">
+            <label for="profile_pic_preview">Upload a profile picture!</label>
+            <div class="container" align="center">
+                <img class="img-thumbnail" src="{{ profile_photo|default:"https://thumbs.dreamstime.com/b/default-avatar-profile-image-vector-social-media-user-icon-potrait-182347582.jpg"}}" id="profile_pic_preview">
+            </div>
+
             <div class="custom-file">
               <input type="file" accept="image/*" class="custom-file-input" id="profile_photo" name="profile_photo" value="profile_photo">
-              <label class="custom-file-label" for="customProfilePicture">Choose Image Files</label>
+              <label class="custom-file-label" for="customProfilePicture">Choose an Image</label>
             </div>
         </div>
+
+        <br>
     
         <div class="form-group">
+            <label for="header_pic_preview">Upload a header photo!</label>
             <div class="container" align="center">
                 <img class="img-thumbnail" src="{{ header_photo|default:"https://www.facebook.com/images/groups/groups-default-cover-photo-2x.png"}}" id="header_pic_preview">
             </div>
 
             <div class="custom-file">
               <input type="file" accept="image/*" class="custom-file-input" id="header_photo" name="header_photo" value="header_photo">
-              <label class="custom-file-label" for="customHeaderPicture">Choose Image Files</label>
+              <label class="custom-file-label" for="customHeaderPicture">Choose an Image</label>
             </div>
         </div>
             <div align="center">

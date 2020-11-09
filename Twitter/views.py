@@ -2,6 +2,7 @@ from django.http import HttpResponse
 from django.db import connection
 from django.shortcuts import render, redirect
 from .auth import auth_or_redirect
+from django.urls import reverse
 
 def create_account(request):
     message = ''
@@ -167,27 +168,66 @@ def home_page(request):
 
     return render(request, template_name, context)
 
+
 @auth_or_redirect
 def profile_edit(request):
-    profile_photo = None
-    header_photo = None
+    user_id = request.session.get("user_id", None)
+    username = request.session.get("username", None)
+
+    with connection.cursor() as cursor:
+        cursor.execute(f'''SELECT BIO, PROFILE_PHOTO, HEADER_PHOTO
+                           FROM ACCOUNT WHERE ID = {user_id};''')
+
+        (current_bio, current_profile_photo, current_header_photo) = cursor.fetchone()
+
+        print("Printing bio, pp and hp")
+        print((current_bio, current_profile_photo, current_header_photo))
+
+    from django.core.files.storage import FileSystemStorage
+
+    (bio, profile_photo, header_photo) = (current_bio, current_profile_photo, current_header_photo)
 
     if request.POST:
-        print('Printing POST request...')
-        print(request.POST)
+        bio = request.POST.get("bio", '')
+        profile_photo = request.FILES.get("profile_photo", '')
+        header_photo = request.FILES.get("header_photo", '')
 
-    if request.FILES:
-        print('Printing files...')
-        print(request.FILES)
-        profile_photo = request.FILES.get("profile_photo", None)
-        header_photo = request.FILES.get("header_photo", None)
+        fs = FileSystemStorage()
 
-    template_name = "image-upload.html"
-    context = {"profile_photo": profile_photo,
-               "header_photo": header_photo}
+        if bio is None:
+            bio = current_bio
+
+        if profile_photo:
+            profile_photo_name = fs.save(profile_photo.name, profile_photo)
+            profile_photo = fs.url(profile_photo_name)
+        else:
+            profile_photo = current_profile_photo
+
+        if header_photo:
+            header_photo_name = fs.save(header_photo.name, header_photo)
+            header_photo = fs.url(header_photo_name)
+        else:
+            header_photo = current_header_photo
+
+        print("Updating bio, pp, hp for following data")
+        print((bio, profile_photo, header_photo, user_id))
+
+        with connection.cursor() as cursor:
+            cursor.execute(f'''UPDATE ACCOUNT
+                            SET BIO = '{bio}',
+                                PROFILE_PHOTO = '{profile_photo}',
+                                HEADER_PHOTO = '{header_photo}'
+                            WHERE ID = {user_id};''')
+            connection.commit()
+
+        return redirect(reverse('user_profile', args=[username]))
+
+    template_name = "profile_edit.html"
+    context = {'bio': bio,
+               'profile_photo': profile_photo,
+               'header_photo': header_photo}
 
     return render(request, template_name, context)
-
 
 def test(request):
     img_path = 'https://www.facebook.com/images/groups/groups-default-cover-photo-2x.png'
@@ -213,31 +253,13 @@ def navbar(request):
     return render(request, template_name, context)
 
 
+@auth_or_redirect
 def profile(request):
     user_id = request.session.get("user_id", None)
     username = request.session.get("username", None)
 
-    # if request.POST and request.POST.get("follow", None):
-    #     with connection.cursor() as cursor:
-    #         data = cursor.callproc('INSERT_FOLLOW_NOTIF', (username, password, 'default' * 30, user_id, 'default' * 10))
-    #         cursor.execute(f'''SELECT M.TEXT, M.TIMESTAMP, M.SEEN,
-    #                         (SELECT ACCOUNTNAME FROM ACCOUNT A WHERE A.ID=ASM.ACCOUNT_ID) NAME
-    #                         FROM ACCOUNT_SENDS_MESSAGE ASM JOIN ACCOUNT_RECEIVES_MESSAGE ARM
-    #                         ON(ASM.MESSAGE_ID = ARM.MESSAGE_ID)
-    #                         JOIN MESSAGE M
-    #                         ON(ARM.MESSAGE_ID = M.ID)
-    #                         WHERE
-    #                         (ASM.ACCOUNT_ID={user_id} AND ARM.ACCOUNT_ID={receiver_id})
-    #                         OR
-    #                         (ARM.ACCOUNT_ID={user_id} AND ASM.ACCOUNT_ID={receiver_id})
-    #
-    #                         ORDER BY TIMESTAMP ASC;''')
+    return redirect(reverse('user_profile', args=[username]))
 
-    context = {"user_id": user_id,
-               "username": username}
-
-    template_name = "profile.html"
-    return render(request, template_name, context)
 
 @auth_or_redirect
 def user_profile(request, profilename):
@@ -245,51 +267,77 @@ def user_profile(request, profilename):
     user_id = request.session.get("user_id", None)
     username = request.session.get("username", None)
 
-    profile_id = None
+    if profilename != username:
+        # will be used to replace follow button with profile edit one
+        self_profile = None
 
-    with connection.cursor() as cursor:
-        cursor.execute(f"SELECT ID FROM ACCOUNT WHERE ACCOUNTNAME = '{profilename}';")
-        row = cursor.fetchone()
-
-        if len(row) == 0:
-            return HttpResponse("<h2>Invalid User profile!</h2>")
-        else:
-            profile_id = row[0]
-
-    # The follow button will be disabled if the profile user is followed by the logged in user!
-    follows_user = None
-
-    with connection.cursor() as cursor:
-        cursor.execute(f'''SELECT COUNT(*)
-                        FROM ACCOUNT_FOLLOWS_ACCOUNT
-                        WHERE ACCOUNT_ID = {user_id}
-                        AND 
-                        F_NOTIFICATION_ID = 
-                            (SELECT FOLLOW_NOTIFICATION_ID
-                            FROM FOLLOW_NOTIFICATION
-                            WHERE FOLLOWED_ACCOUNT_ID = {profile_id});''')
-        row = cursor.fetchone()
-
-        # if user is visiting his own profile
-        if row[0] != 0 or (username == profilename):
-            follows_user = True
-
-    if request.POST:
         with connection.cursor() as cursor:
-            data = cursor.callproc('INSERT_FOLLOW_NOTIF', (username, profilename, 'default'*30))
+            cursor.execute(f"SELECT ID FROM ACCOUNT WHERE ACCOUNTNAME = '{profilename}';")
+            row = cursor.fetchone()
 
-            if data[2] == 'OK':
-                print("Follow successful!")
-                follows_user = True
+            if len(row) == 0:
+                return HttpResponse("<h2>Invalid User profile!</h2>")
             else:
-                print("ERROR FOLLOWING USER!")
-                print(data[2])
+                profile_id = row[0]
+
+        # The follow button will be disabled if the profile user is followed by the logged in user!
+        follows_user = None
+
+        with connection.cursor() as cursor:
+            cursor.execute(f'''SELECT COUNT(*)
+                            FROM ACCOUNT_FOLLOWS_ACCOUNT
+                            WHERE ACCOUNT_ID = {user_id}
+                            AND 
+                            F_NOTIFICATION_ID = 
+                                (SELECT FOLLOW_NOTIFICATION_ID
+                                FROM FOLLOW_NOTIFICATION
+                                WHERE FOLLOWED_ACCOUNT_ID = {profile_id});''')
+            row = cursor.fetchone()
+
+            # if user is visiting his own profile
+            if row[0] != 0 or (username == profilename):
+                follows_user = True
+
+        if request.POST:
+            with connection.cursor() as cursor:
+                data = cursor.callproc('INSERT_FOLLOW_NOTIF', (username, profilename, 'default'*30))
+
+                if data[2] == 'OK':
+                    print("Follow successful!")
+                    follows_user = True
+                else:
+                    print("ERROR FOLLOWING USER!")
+                    print(data[2])
+
+    # user is visiting his own profile
+    else:
+        follows_user = True
+        profile_id = user_id
+        self_profile = True
+
+    # fetch bio, profile photo and header photo
+    profile_photo = ''
+    header_photo = ''
+    bio = ''
+
+    with connection.cursor() as cursor:
+        cursor.execute(f'''SELECT BIO, PROFILE_PHOTO, HEADER_PHOTO
+                               FROM ACCOUNT WHERE ID = {profile_id};''')
+
+        (bio, profile_photo, header_photo) = cursor.fetchone()
+
+        print("Printing bio, pp and hp")
+        print((bio, profile_photo, header_photo))
 
     context = {"user_id": user_id,
                "username": username,
                "profile_id": profile_id,
                "profile_name": profilename,
-               "follows_user": follows_user}
+               "follows_user": follows_user,
+               'bio': bio,
+               'profile_photo': profile_photo,
+               'header_photo': header_photo,
+               'self_profile': self_profile}
 
     template_name = "profile.html"
     return render(request, template_name, context)
@@ -303,89 +351,6 @@ def skeleton(request):
                "username": username}
 
     template_name = "skeleton.html"
-    return render(request, template_name, context)
-
-@auth_or_redirect
-def message(request):
-    user_id = request.session.get("user_id", None)
-    username = request.session.get("username", None)
-
-    # This will list all users, and hyperlink to the inbox and chat history to all users
-
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT ACCOUNTNAME FROM ACCOUNT;")
-        row = cursor.fetchall()
-        print("Printing User names...")
-        print(row)
-        userlist = [col[0] for col in row]
-        print("Printing User names pretty print...")
-        print(userlist)
-
-    context = {"user_id": user_id,
-               "username": username,
-               "userlist": userlist}
-
-    template_name = "message.html"
-    return render(request, template_name, context)
-
-@auth_or_redirect
-def inbox(request, receiver):
-    print("In view of inbox with user "+receiver)
-
-    messagelist = None
-
-    user_id = request.session.get("user_id", None)
-    username = request.session.get("username", None)
-    message = None
-
-    # This will list all messages with a particular user
-
-    with connection.cursor() as cursor:
-        # Retrieving receiver id
-        cursor.execute(f"SELECT ID FROM ACCOUNT WHERE ACCOUNTNAME='{receiver}';")
-        receiver_id = cursor.fetchone()[0]
-        print(receiver_id)
-        cursor.execute(f'''SELECT M.TEXT, M.TIMESTAMP, M.SEEN,
-                        (SELECT ACCOUNTNAME FROM ACCOUNT A WHERE A.ID=ASM.ACCOUNT_ID) NAME
-                        FROM ACCOUNT_SENDS_MESSAGE ASM JOIN ACCOUNT_RECEIVES_MESSAGE ARM
-                        ON(ASM.MESSAGE_ID = ARM.MESSAGE_ID)
-                        JOIN MESSAGE M
-                        ON(ARM.MESSAGE_ID = M.ID)
-                        WHERE 
-                        (ASM.ACCOUNT_ID={user_id} AND ARM.ACCOUNT_ID={receiver_id})
-                        OR
-                        (ARM.ACCOUNT_ID={user_id} AND ASM.ACCOUNT_ID={receiver_id})
-                        
-                        ORDER BY TIMESTAMP ASC;''')
-
-        # row = cursor.fetchall()
-        messagelist = dictfetchall(cursor)
-        # print(row)
-        # userlist = [col[0] for col in row]
-
-    if request.POST:
-        chat = request.POST.get('chatbox', None)
-
-        with connection.cursor() as cursor:
-            data = cursor.callproc('INSERT_MESSAGE', (username, receiver, chat, None, 'default'*10, '01-JAN-2020', '01-JAN-2020'))
-            if data[4] == 'OK':
-                print(data)
-                print('Message sent!')
-                newchat = {'NAME': username,
-                           'TEXT': chat,
-                           'TIMESTAMP': data[5],
-                           'SEEN': data[6]}
-                messagelist.append(newchat)
-            else:
-                print(data[4])
-                message = data[4]
-
-    context = {"user_id": user_id,
-               "username": username,
-               "receiver": receiver,
-               "messagelist": messagelist}
-
-    template_name = "inbox.html"
     return render(request, template_name, context)
 
 
