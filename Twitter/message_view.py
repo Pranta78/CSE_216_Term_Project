@@ -46,8 +46,9 @@ def inbox(request, receiver):
         cursor.execute(f"SELECT ID FROM ACCOUNT WHERE ACCOUNTNAME='{receiver}';")
         receiver_id = cursor.fetchone()[0]
         print(receiver_id)
-        cursor.execute(f'''SELECT M.TEXT, M.TIMESTAMP, M.SEEN,
-                        (SELECT ACCOUNTNAME FROM ACCOUNT A WHERE A.ID=ASM.ACCOUNT_ID) NAME
+        cursor.execute(f'''SELECT M.TEXT, M.MEDIA, M.TIMESTAMP, M.SEEN,
+                        (SELECT ACCOUNTNAME FROM ACCOUNT A WHERE A.ID=ASM.ACCOUNT_ID) NAME,
+                        (SELECT PROFILE_PHOTO FROM ACCOUNT A WHERE A.ID=ASM.ACCOUNT_ID) PROFILE_PHOTO
                         FROM ACCOUNT_SENDS_MESSAGE ASM JOIN ACCOUNT_RECEIVES_MESSAGE ARM
                         ON(ASM.MESSAGE_ID = ARM.MESSAGE_ID)
                         JOIN MESSAGE M
@@ -66,17 +67,28 @@ def inbox(request, receiver):
 
     if request.POST:
         chat = request.POST.get('chatbox', None)
+        media = request.FILES.get("file", None)
+
+        if media:
+            from django.core.files.storage import FileSystemStorage
+            fs = FileSystemStorage()
+            media_name = fs.save(media.name, media)
+            media = fs.url(media_name)
 
         with connection.cursor() as cursor:
             data = cursor.callproc('INSERT_MESSAGE',
-                                   (username, receiver, chat, None, 'default' * 10, '01-JAN-2020', '01-JAN-2020'))
+                                   (username, receiver, chat, media, 'default' * 10, '01-JAN-2020', '01-JAN-2020'))
             if data[4] == 'OK':
                 print(data)
                 print('Message sent!')
+                cursor.execute(f"SELECT PROFILE_PHOTO FROM ACCOUNT WHERE ID={user_id};")
+                profile_photo = cursor.fetchone()[0]
                 newchat = {'NAME': username,
                            'TEXT': chat,
+                           'MEDIA': media,
                            'TIMESTAMP': data[5],
-                           'SEEN': data[6]}
+                           'SEEN': data[6],
+                           'PROFILE_PHOTO': profile_photo}
                 messagelist.append(newchat)
             else:
                 print(data[4])

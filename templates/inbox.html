@@ -3,46 +3,78 @@
 {% block skeleton_content %}
     <h1>{{ receiver }}</h1>
 
-<div class="container">
-
+<div class="container-fluid">
     <ul class="list-group">
         {% for message in messagelist %}
-            <li class="list-group-item {% if message.NAME == username %}active{% endif %}" style="text-align: {% if message.NAME == username %}right{% else %}left{% endif %}">
-            <h3>
-                {{ message.NAME }}
-            </h3>
-            <small>
-                {{ message.TIMESTAMP }}
-            </small>
-            <p>
-                {{ message.TEXT }}
-            </p>
+            <li class="list-group-item " style="text-align: {% if message.NAME == username %}right{% else %}left{% endif %}">
+
+            {% if message.NAME == username %}
+                <small>{{ message.TIMESTAMP }}</small>
+                <h3 style="display: inline;">{{ message.NAME }}</h3>
+                <img src="{{ message.PROFILE_PHOTO|default:"/media/default_profile.png" }}" width="50px" height="50px" style="border-radius: 50%;">
+
+                {% if message.TEXT %}
+                    <p>{{ message.TEXT }}</p>
+                {% endif %}
+
+                {% if message.MEDIA %}
+                    <img src="{{ message.MEDIA }}" style="margin-left: 0px; max-width: 60%; height: auto">
+                {% endif %}
+
+            {% else %}
+                <img src="{{ message.PROFILE_PHOTO|default:"/media/default_profile.png" }}" width="50px" height="50px" style="border-radius: 50%;">
+                <h3 style="display: inline;">{{ message.NAME }}</h3>
+                <small>{{ message.TIMESTAMP }}</small>
+
+                {% if message.TEXT %}
+                    <p>{{ message.TEXT }}</p>
+                {% endif %}
+
+                {% if message.MEDIA %}
+                    <img src="{{ message.MEDIA }}" style="margin-right: 0px; max-width: 60%; height: auto">
+                {% endif %}
+
+            {% endif %}
          </li>
         {% endfor %}
     </ul>
 
-    <br>
+<br>
 
-    <form method="POST">{% csrf_token %}
+{#<div style="position: sticky; bottom: 0;">#}
+    <form method="POST" enctype="multipart/form-data">{% csrf_token %}
         <div class="form-group">
             <div class="row">
-                <div class="col-6">
+                <div class="col-6" style="font-size: 22px">
                     <label for="exampleFormControlTextarea1" style="float: left">
                         Send <b>{{ receiver }}</b> a message!
                     </label>
                 </div>
 
                 <div class="col-6" align="right">
-                    <button type="submit" class="btn btn-primary">
-                        Send
+                  <label id="printFileName" style="color: #cc1111; font-weight: bold"></label>
+                  <label for="upload">
+                    <span class="fa fa-file-image-o fa-lg" aria-hidden="true"> Attach</span>
+                    <input type="file" accept="image/*" id="upload" name="file" style="display:none" value="upload">
+                  </label>
+                    <button type="submit" class="btn">
+                        <i class="fa fa-send fa-lg"> Send</i>
                     </button>
                 </div>
             </div>
 
-           <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" placeholder="Type a message..." name="chatbox"></textarea>
+           <textarea class="form-control" id="chatInput" rows="3" placeholder="Type a message..." name="chatbox" style="resize: none;" maxlength="280"></textarea>
         </div>
     <br>
     </form>
+
+    <script>
+        document.getElementById("upload").onchange = function () {
+                document.getElementById("printFileName").textContent = "File: "+this.files[0].name+"    ";
+            };
+    </script>
+{#</div>#}
+
 </div>
 
 {% endblock %}
