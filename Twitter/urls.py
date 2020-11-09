@@ -18,9 +18,9 @@ from django.conf.urls import url
 from django.conf import settings
 from django.conf.urls.static import static
 from .views import (create_account, login, home_page,
-                    profile_edit, test, logout, navbar, profile,
-                    skeleton, user_profile)
+                    logout, skeleton,)
 
+from .profile_view import profile, profile_edit, user_profile
 from .message_view import message, inbox
 
 from .tweet_view import detailed_tweet_view, create_tweet, create_reply_comment, create_reply_tweet
@@ -34,8 +34,6 @@ urlpatterns = [
     url(r'^home/', home_page),
     url(r'^profile/', profile),
     url(r'^profile-edit/', profile_edit),
-    url(r'^test/', test),
-    url(r'^navbar/', navbar),
     url(r'^skeleton/', skeleton),
     url(r'^messages/', message),
     url(r'^user/(\w+)/$', user_profile, name='user_profile'),
