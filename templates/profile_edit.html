@@ -5,7 +5,7 @@
 {% block skeleton_content %}
 
 <div class="container-fluid">
-    <h1 style="color: lightcoral; background-color: floralwhite; text-align: center">
+    <h1 style="color: white; background-color: rgb(29, 161, 242); text-align: center">
         Update your profile!
     </h1>
 </div>
@@ -17,16 +17,16 @@
     <form method="POST" enctype="multipart/form-data" style="align-content: center; margin-left: 20%; margin-right: 20%">{% csrf_token %}
         <div class="form-group">
             <div class="md-form amber-textarea active-amber-textarea">
-              <label style="float: left">Write something about you!</label>
+              <label style="float: left; color: darkred">Write something about you!</label>
               <label style="float: right" id="counter">280 characters left</label>
               <textarea class="md-textarea form-control" rows="3" name="bio" id="bio" maxlength="280" placeholder="Write your bio!">{% if bio %}{{ bio }}{% endif %}</textarea>
             </div>
         </div>
     
         <div class="form-group">
-            <label for="profile_pic_preview">Upload a profile picture!</label>
+            <label for="profile_pic_preview" style="color: darkred">Upload a profile picture!</label>
             <div class="container" align="center">
-                <img class="img-thumbnail" src="{{ profile_photo|default:"https://thumbs.dreamstime.com/b/default-avatar-profile-image-vector-social-media-user-icon-potrait-182347582.jpg"}}" id="profile_pic_preview">
+                <img class="img-thumbnail" src="{{ profile_photo|default:"/media/default_profile.png"}}" id="profile_pic_preview">
             </div>
 
             <div class="custom-file">
@@ -38,9 +38,9 @@
         <br>
     
         <div class="form-group">
-            <label for="header_pic_preview">Upload a header photo!</label>
+            <label for="header_pic_preview" style="color: darkred">Upload a header photo!</label>
             <div class="container" align="center">
-                <img class="img-thumbnail" src="{{ header_photo|default:"https://www.facebook.com/images/groups/groups-default-cover-photo-2x.png"}}" id="header_pic_preview">
+                <img class="img-thumbnail" src="{{ header_photo|default:"/media/default_header.png"}}" id="header_pic_preview">
             </div>
 
             <div class="custom-file">

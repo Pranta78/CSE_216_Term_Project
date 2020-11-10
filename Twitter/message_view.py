@@ -23,7 +23,8 @@ def message(request):
 
     context = {"user_id": user_id,
                "username": username,
-               "userlist": userlist}
+               "userlist": userlist,
+               "messages_is_active": True}
 
     template_name = "message.html"
     return render(request, template_name, context)
@@ -97,7 +98,8 @@ def inbox(request, receiver):
     context = {"user_id": user_id,
                "username": username,
                "receiver": receiver,
-               "messagelist": messagelist}
+               "messagelist": messagelist,
+               "messages_is_active": True}
 
     template_name = "inbox.html"
     return render(request, template_name, context)

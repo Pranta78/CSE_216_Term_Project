@@ -165,7 +165,8 @@ def home_page(request):
 
     context = {"user_id": user_id,
                "username": username,
-               "tweet_list": tweetlist}
+               "tweet_list": tweetlist,
+               "home_is_active": True}
 
     template_name = "home.html"
 

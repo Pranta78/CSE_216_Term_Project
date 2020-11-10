@@ -16,6 +16,14 @@ def profile_edit(request):
 
         (current_bio, current_profile_photo, current_header_photo) = cursor.fetchone()
 
+        # To avoid pushing 'None' to database
+        if current_bio is None:
+            current_bio = ''
+        if current_profile_photo is None:
+            current_profile_photo = ''
+        if current_header_photo is None:
+            current_header_photo = ''
+
         print("Printing bio, pp and hp")
         print((current_bio, current_profile_photo, current_header_photo))
 
@@ -61,7 +69,8 @@ def profile_edit(request):
     template_name = "profile_edit.html"
     context = {'bio': bio,
                'profile_photo': profile_photo,
-               'header_photo': header_photo}
+               'header_photo': header_photo,
+               "profile_is_active": True}
 
     return render(request, template_name, context)
 
@@ -150,7 +159,8 @@ def user_profile(request, profilename):
                'bio': bio,
                'profile_photo': profile_photo,
                'header_photo': header_photo,
-               'self_profile': self_profile}
+               'self_profile': self_profile,
+               "profile_is_active": True}
 
     template_name = "profile.html"
     return render(request, template_name, context)
@@ -190,38 +200,91 @@ def fetchBookmarkedPosts(userID):
         return [col[0] for col in row]
 
 
-def fetchFollwers(username):
+def fetchFollowers(username):
     """
-    This will fetch all users' name who follow the user with given user Name
+    This will fetch all users' information who follow the user with given user Name
     :param username: a user name
-    :return: a list of string containing all user name's who follow the user user with given user ID
+    :return: a list of dictionaries with keys name, profile pic and bio containing all users' info
+            who follow the user user with given username
     """
     with connection.cursor() as cursor:
-        cursor.execute(f'''SELECT FOLLOWER NAME
-                           FROM FOLLOWER
-                           WHERE FOLLOWED = '{username}';''')
+        cursor.execute(f'''SELECT F.FOLLOWER NAME, A.PROFILE_PHOTO, A.BIO
+                           FROM FOLLOWER F JOIN ACCOUNT A
+                           ON(F.FOLLOWER = A.ACCOUNTNAME)
+                           WHERE F.FOLLOWED = '{username}';''')
 
-        row = cursor.fetchall()
+        dict = dictfetchall(cursor)
         print("Printing follower list for user: " + username)
-        print(row)
-        return [col[0] for col in row]
+        print(dict)
+        return dict
 
 
-def fetchFollwedList(username):
+def fetchFollowingList(username):
     """
-    This will fetch all users' name who are followed by the user with given user Name
+    This will fetch all users' information who are followed by the user with given user Name
     :param username: a user name
-    :return: a list of string containing all user name's who are followed by the user with given user Name
+    :return: a list of dictionaries with keys name, profile pic and bio containing all users' info
+            who are followed by the user with given user Name
     """
     with connection.cursor() as cursor:
-        cursor.execute(f'''SELECT FOLLOWED NAME
-                           FROM FOLLOWER
-                           WHERE FOLLOWER = '{username}';''')
+        cursor.execute(f'''SELECT F.FOLLOWED NAME, A.PROFILE_PHOTO, A.BIO
+                           FROM FOLLOWER F JOIN ACCOUNT A
+                           ON(F.FOLLOWED = A.ACCOUNTNAME)
+                           WHERE F.FOLLOWER = '{username}';''')
 
-        row = cursor.fetchall()
-        print("Printing followed list for user: "+username)
-        print(row)
-        return [col[0] for col in row]
+        dict = dictfetchall(cursor)
+        print("Printing followed list for user: " + username)
+        print(dict)
+        return dict
+
+
+def follower(request, profilename):
+    """
+    Receives a profile name and shows corresponding follower list
+    :param request:
+    :param profilename:
+    :return:
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(f'''SELECT F.FOLLOWER NAME, A.PROFILE_PHOTO, A.BIO
+                           FROM FOLLOWER F JOIN ACCOUNT A
+                           ON(F.FOLLOWER = A.ACCOUNTNAME)
+                           WHERE F.FOLLOWED = '{profilename}';''')
+
+        dict = dictfetchall(cursor)
+        print("Printing follower list for user: " + profilename)
+        print(dict)
+
+    template_name = "follower_following_list.html"
+    context = {'follower': True,
+               'user': profilename,
+               'profilelist': dict}
+
+    return render(request, template_name, context)
+
+
+def following(request, profilename):
+    """
+    Receives a profile name and shows users followed by given profile
+    :param request:
+    :param profilename:
+    :return:
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(f'''SELECT F.FOLLOWED NAME, A.PROFILE_PHOTO, A.BIO
+                           FROM FOLLOWER F JOIN ACCOUNT A
+                           ON(F.FOLLOWED = A.ACCOUNTNAME)
+                           WHERE F.FOLLOWER = '{profilename}';''')
+
+        dict = dictfetchall(cursor)
+        print("Printing followed list for user: " + profilename)
+        print(dict)
+
+    template_name = "follower_following_list.html"
+    context = {'user': profilename,
+               'profilelist': dict}
+
+    return render(request, template_name, context)
 
 
 def dictfetchall(cursor):

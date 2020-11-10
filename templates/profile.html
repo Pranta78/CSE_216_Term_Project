@@ -66,6 +66,20 @@
 
     <div class="row">
         <div class="container-fluid">
+            <a href="{% url 'user_profile_follower' profile_name %}" style="background-color: #a41515; color: white">
+                 Followers
+            </a>
+            <label>    </label>
+            <a href="{% url 'user_profile_following' profile_name %}" style="background-color: #205067; color: white">
+                People Following
+            </a>
+        </div>
+    </div>
+
+    <br>
+
+    <div class="row">
+        <div class="container-fluid">
             {% include 'profile_navigator.html' %}
         </div>
     </div>

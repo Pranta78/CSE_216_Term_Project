@@ -20,7 +20,7 @@ from django.conf.urls.static import static
 from .views import (create_account, login, home_page,
                     logout, skeleton,)
 
-from .profile_view import profile, profile_edit, user_profile
+from .profile_view import profile, profile_edit, user_profile, follower, following
 from .message_view import message, inbox
 
 from .tweet_view import detailed_tweet_view, create_tweet, create_reply_comment, create_reply_tweet
@@ -37,6 +37,8 @@ urlpatterns = [
     url(r'^skeleton/', skeleton),
     url(r'^messages/', message),
     url(r'^user/(\w+)/$', user_profile, name='user_profile'),
+    url(r'^user/(\w+)/followers/$', follower, name='user_profile_follower'),
+    url(r'^user/(\w+)/following/$', following, name='user_profile_following'),
     url(r'^inbox/(\w+)/$', inbox, name='user_inbox'),
     url(r'^create/tweet/', create_tweet),
     url(r'^create/reply/tweet/(?P<tweetID>\w+)/$', create_reply_tweet),

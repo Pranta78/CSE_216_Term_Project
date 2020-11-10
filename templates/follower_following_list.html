@@ -1,0 +1,40 @@
+{% extends "skeleton.html" %}
+
+{% block skeleton_content %}
+    {% if follower %}
+        <h3 style="color: #003366">
+            People who follow <i style="color: darkgreen">{{ user }}</i>
+        </h3>
+    {% else %}
+        <h3 style="color: #003366">
+            People who <i style="color: darkgreen">{{ user }}</i> follows
+        </h3>
+    {% endif %}
+
+<ul class="list-group">
+  <li class="list-group-item">
+    {% for profile in profilelist %}
+        <div class="card">
+          <div class="card-body">
+
+            <img src="{{ profile.PROFILE_PHOTO|default:"/media/default_profile.png" }}"  width="50px" height="50px" style="border-radius: 50%;">
+
+            <div class="card-title" style="display: inline">
+                <a href="{% url 'user_profile' profile.NAME %}">@{{ profile.NAME }}</a>
+            </div>
+
+            <div class="card-text" style="margin-left: 5%">
+                {% if profile.BIO %}
+                    <p>{{ profile.BIO|truncatewords:10 }}</p>
+                {% else %}
+                    <p> </p>
+                {% endif %}
+            </div>
+
+          </div>
+        </div>
+      {% endfor %}
+  </li>
+</ul>
+
+{% endblock %}

@@ -9,15 +9,11 @@
             <li class="list-group-item" style="text-align: {% if message.NAME == username %}right{% else %}left{% endif %}">
 
             {% if message.NAME == username %}
-                <small>{{ message.TIMESTAMP }}</small>
+                <small class="text-muted">{{ message.TIMESTAMP }}</small>
                 <h3 style="display: inline;">{{ message.NAME }}</h3>
                 <img src="{{ message.PROFILE_PHOTO|default:"/media/default_profile.png" }}" width="50px" height="50px" style="border-radius: 50%;">
 
-                {% if message.TEXT %}
-                    <p>{{ message.TEXT }}</p>
-                {% else %}
-                    <p>     </p>
-                {% endif %}
+                <p>{{ message.TEXT|default:" " }}</p>
 
                 {% if message.MEDIA %}
                     <img src="{{ message.MEDIA }}" style="margin-left: 0px; max-width: 60%; height: auto">
@@ -26,13 +22,9 @@
             {% else %}
                 <img src="{{ message.PROFILE_PHOTO|default:"/media/default_profile.png" }}" width="50px" height="50px" style="border-radius: 50%;">
                 <h3 style="display: inline;">{{ message.NAME }}</h3>
-                <small>{{ message.TIMESTAMP }}</small>
+                <small class="text-muted">{{ message.TIMESTAMP }}</small>
 
-                {% if message.TEXT %}
-                    <p>{{ message.TEXT }}</p>
-                {% else %}
-                    <p>     </p>
-                {% endif %}
+                <p>{{ message.TEXT|default:" " }}</p>
 
                 {% if message.MEDIA %}
                     <img src="{{ message.MEDIA }}" style="margin-right: 0px; max-width: 60%; height: auto">
@@ -46,6 +38,7 @@
 <br>
 
 {#<div style="position: sticky; bottom: 0;">#}
+<div id="chatBox">
     <form method="POST" enctype="multipart/form-data">{% csrf_token %}
         <div class="form-group">
             <div class="row">
@@ -75,8 +68,14 @@
         document.getElementById("upload").onchange = function () {
                 document.getElementById("printFileName").textContent = "File: "+this.files[0].name+"    ";
             };
+
+        document.getElementsByTagName("body")[0].onload = function () {
+            document.getElementById("chatBox").scrollIntoView(true)
+        };
+
     </script>
 {#</div>#}
+</div>
 
 </div>
 
