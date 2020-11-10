@@ -11,18 +11,10 @@ def profile_edit(request):
     username = request.session.get("username", None)
 
     with connection.cursor() as cursor:
-        cursor.execute(f'''SELECT BIO, PROFILE_PHOTO, HEADER_PHOTO
-                           FROM ACCOUNT WHERE ID = {user_id};''')
+        cursor.execute('''SELECT BIO, PROFILE_PHOTO, HEADER_PHOTO
+                           FROM ACCOUNT WHERE ID = :user_id;''', {'user_id': user_id})
 
         (current_bio, current_profile_photo, current_header_photo) = cursor.fetchone()
-
-        # To avoid pushing 'None' to database
-        if current_bio is None:
-            current_bio = ''
-        if current_profile_photo is None:
-            current_profile_photo = ''
-        if current_header_photo is None:
-            current_header_photo = ''
 
         print("Printing bio, pp and hp")
         print((current_bio, current_profile_photo, current_header_photo))
@@ -32,9 +24,9 @@ def profile_edit(request):
     (bio, profile_photo, header_photo) = (current_bio, current_profile_photo, current_header_photo)
 
     if request.POST:
-        bio = request.POST.get("bio", '')
-        profile_photo = request.FILES.get("profile_photo", '')
-        header_photo = request.FILES.get("header_photo", '')
+        bio = request.POST.get("bio", None)
+        profile_photo = request.FILES.get("profile_photo", None)
+        header_photo = request.FILES.get("header_photo", None)
 
         fs = FileSystemStorage()
 
@@ -57,11 +49,13 @@ def profile_edit(request):
         print((bio, profile_photo, header_photo, user_id))
 
         with connection.cursor() as cursor:
-            cursor.execute(f'''UPDATE ACCOUNT
-                            SET BIO = '{bio}',
-                                PROFILE_PHOTO = '{profile_photo}',
-                                HEADER_PHOTO = '{header_photo}'
-                            WHERE ID = {user_id};''')
+            named_params = {'bio': bio, 'profile_photo': profile_photo, 'header_photo': header_photo, 'user_id': user_id}
+
+            cursor.execute('''UPDATE ACCOUNT
+                            SET BIO = :bio,
+                                PROFILE_PHOTO = :profile_photo,
+                                HEADER_PHOTO = :header_photo
+                            WHERE ID = :user_id;''', named_params)
             connection.commit()
 
         return redirect(reverse('user_profile', args=[username]))
@@ -94,7 +88,7 @@ def user_profile(request, profilename):
         self_profile = None
 
         with connection.cursor() as cursor:
-            cursor.execute(f"SELECT ID FROM ACCOUNT WHERE ACCOUNTNAME = '{profilename}';")
+            cursor.execute("SELECT ID FROM ACCOUNT WHERE ACCOUNTNAME = :profilename;", {'profilename': profilename})
             row = cursor.fetchone()
 
             if len(row) == 0:
@@ -106,14 +100,14 @@ def user_profile(request, profilename):
         follows_user = None
 
         with connection.cursor() as cursor:
-            cursor.execute(f'''SELECT COUNT(*)
+            cursor.execute('''SELECT COUNT(*)
                             FROM ACCOUNT_FOLLOWS_ACCOUNT
-                            WHERE ACCOUNT_ID = {user_id}
+                            WHERE ACCOUNT_ID = :user_id
                             AND 
                             F_NOTIFICATION_ID = 
                                 (SELECT FOLLOW_NOTIFICATION_ID
                                 FROM FOLLOW_NOTIFICATION
-                                WHERE FOLLOWED_ACCOUNT_ID = {profile_id});''')
+                                WHERE FOLLOWED_ACCOUNT_ID = :profile_id);''', {'user_id': user_id, 'profile_id': profile_id})
             row = cursor.fetchone()
 
             # if user is visiting his own profile
@@ -143,8 +137,8 @@ def user_profile(request, profilename):
     bio = ''
 
     with connection.cursor() as cursor:
-        cursor.execute(f'''SELECT BIO, PROFILE_PHOTO, HEADER_PHOTO
-                               FROM ACCOUNT WHERE ID = {profile_id};''')
+        cursor.execute('''SELECT BIO, PROFILE_PHOTO, HEADER_PHOTO
+                               FROM ACCOUNT WHERE ID = :profile_id;''', {'profile_id': profile_id})
 
         (bio, profile_photo, header_photo) = cursor.fetchone()
 
@@ -280,6 +274,9 @@ def viewLikedPosts(request, profilename):
 
         profile_id = profile_id[0]
 
+        # IS_USER_AUDIENCE function is called to check whether the visitor (with username as user name)
+        # has sufficient permission to see the post
+
         cursor.execute(f'''SELECT P.ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
                            FROM ACCOUNT_LIKES_POST ALP JOIN POST P
                            ON(ALP.POST_ID = P.ID)
@@ -287,7 +284,8 @@ def viewLikedPosts(request, profilename):
                            ON(P.ID = APP.POST_ID)
                            JOIN ACCOUNT A
                            ON(APP.ACCOUNT_ID = A.ID)
-                           WHERE ALP.ACCOUNT_ID = {profile_id};''')
+                           WHERE ALP.ACCOUNT_ID = {profile_id}
+                           AND IS_USER_AUDIENCE('{username}', P.ID) = 1;''')
 
         post_list = dictfetchall(cursor)
         print("Printing liked post for user: " + profilename)
@@ -377,14 +375,14 @@ def fetchBookmarkedPosts(userID):
             which were bookmarked by the user
     """
     with connection.cursor() as cursor:
-        cursor.execute(f'''SELECT P.ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO
+        cursor.execute('''SELECT P.ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO
                            FROM ACCOUNT_BOOKMARKS_POST ABP JOIN POST P
                            ON(ABP.POST_ID = P.ID)
                            JOIN ACCOUNT_POSTS_POST APP
                            ON(P.ID = APP.POST_ID)
                            JOIN ACCOUNT A
                            ON(APP.ACCOUNT_ID = A.ID)
-                           WHERE ABP.ACCOUNT_ID = {userID};''')
+                           WHERE ABP.ACCOUNT_ID = :userID;''', {'userID': userID})
 
         row = cursor.fetchall()
         print("Printing bookmarked post for user: " + userID)
@@ -400,10 +398,10 @@ def follower(request, profilename):
     :return:
     """
     with connection.cursor() as cursor:
-        cursor.execute(f'''SELECT F.FOLLOWER NAME, A.PROFILE_PHOTO, A.BIO
+        cursor.execute('''SELECT F.FOLLOWER NAME, A.PROFILE_PHOTO, A.BIO
                            FROM FOLLOWER F JOIN ACCOUNT A
                            ON(F.FOLLOWER = A.ACCOUNTNAME)
-                           WHERE F.FOLLOWED = '{profilename}';''')
+                           WHERE F.FOLLOWED = :profilename;''', {'profilename': profilename})
 
         dict = dictfetchall(cursor)
         print("Printing follower list for user: " + profilename)
@@ -425,10 +423,10 @@ def following(request, profilename):
     :return:
     """
     with connection.cursor() as cursor:
-        cursor.execute(f'''SELECT F.FOLLOWED NAME, A.PROFILE_PHOTO, A.BIO
+        cursor.execute('''SELECT F.FOLLOWED NAME, A.PROFILE_PHOTO, A.BIO
                            FROM FOLLOWER F JOIN ACCOUNT A
                            ON(F.FOLLOWED = A.ACCOUNTNAME)
-                           WHERE F.FOLLOWER = '{profilename}';''')
+                           WHERE F.FOLLOWER = :profilename;''', {'profilename': profilename})
 
         dict = dictfetchall(cursor)
         print("Printing followed list for user: " + profilename)
