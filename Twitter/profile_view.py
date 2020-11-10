@@ -190,7 +190,7 @@ def populateProfile(profilename, username, user_id):
         self_profile = None
 
         with connection.cursor() as cursor:
-            cursor.execute(f"SELECT ID FROM ACCOUNT WHERE ACCOUNTNAME = '{profilename}';")
+            cursor.execute("SELECT ID FROM ACCOUNT WHERE ACCOUNTNAME = :profilename;", {"profilename": profilename})
             row = cursor.fetchone()
 
             if len(row) == 0:
@@ -202,14 +202,14 @@ def populateProfile(profilename, username, user_id):
         follows_user = None
 
         with connection.cursor() as cursor:
-            cursor.execute(f'''SELECT COUNT(*)
+            cursor.execute('''SELECT COUNT(*)
                                 FROM ACCOUNT_FOLLOWS_ACCOUNT
-                                WHERE ACCOUNT_ID = {user_id}
+                                WHERE ACCOUNT_ID = :user_id
                                 AND 
                                 F_NOTIFICATION_ID = 
                                     (SELECT FOLLOW_NOTIFICATION_ID
                                     FROM FOLLOW_NOTIFICATION
-                                    WHERE FOLLOWED_ACCOUNT_ID = {profile_id});''')
+                                    WHERE FOLLOWED_ACCOUNT_ID = :profile_id);''', {'user_id': user_id, 'profile_id': profile_id})
             row = cursor.fetchone()
 
             # if user is visiting his own profile
@@ -229,7 +229,7 @@ def populateProfile(profilename, username, user_id):
 
     with connection.cursor() as cursor:
         cursor.execute(f'''SELECT BIO, PROFILE_PHOTO, HEADER_PHOTO
-                                   FROM ACCOUNT WHERE ID = {profile_id};''')
+                           FROM ACCOUNT WHERE ID = :profile_id;''', {'profile_id': profile_id})
 
         (bio, profile_photo, header_photo) = cursor.fetchone()
 
@@ -265,7 +265,7 @@ def viewLikedPosts(request, profilename):
     parent_context = populateProfile(profilename, username, user_id)
 
     with connection.cursor() as cursor:
-        cursor.execute(f"SELECT ID FROM ACCOUNT WHERE ACCOUNTNAME='{profilename}';")
+        cursor.execute("SELECT ID FROM ACCOUNT WHERE ACCOUNTNAME= :profilename;", {'profilename': profilename})
 
         profile_id = cursor.fetchone()
 
@@ -277,15 +277,15 @@ def viewLikedPosts(request, profilename):
         # IS_USER_AUDIENCE function is called to check whether the visitor (with username as user name)
         # has sufficient permission to see the post
 
-        cursor.execute(f'''SELECT P.ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
+        cursor.execute('''SELECT P.ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
                            FROM ACCOUNT_LIKES_POST ALP JOIN POST P
                            ON(ALP.POST_ID = P.ID)
                            JOIN ACCOUNT_POSTS_POST APP
                            ON(P.ID = APP.POST_ID)
                            JOIN ACCOUNT A
                            ON(APP.ACCOUNT_ID = A.ID)
-                           WHERE ALP.ACCOUNT_ID = {profile_id}
-                           AND IS_USER_AUDIENCE('{username}', P.ID) = 1;''')
+                           WHERE ALP.ACCOUNT_ID = :profile_id
+                           AND IS_USER_AUDIENCE(:username, P.ID) = 1;''', {'profile_id': profile_id, 'username': username})
 
         post_list = dictfetchall(cursor)
         print("Printing liked post for user: " + profilename)
@@ -294,7 +294,11 @@ def viewLikedPosts(request, profilename):
         for post in post_list:
             post["LIKED"] = True
 
-            cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_BOOKMARKS_POST WHERE ACCOUNT_ID={profile_id} AND POST_ID={post['ID']};")
+            cursor.execute(f'''SELECT COUNT(*)
+                               FROM ACCOUNT_BOOKMARKS_POST
+                               WHERE ACCOUNT_ID = :profile_id
+                               AND POST_ID = :postID;''', {'profile_id': profile_id, 'postID': post["ID"]})
+
             count = cursor.fetchone()[0]
 
             if count == 1:
@@ -322,7 +326,7 @@ def viewPostedTweets(request, profilename):
     parent_context = populateProfile(profilename, username, user_id)
 
     with connection.cursor() as cursor:
-        cursor.execute(f"SELECT ID FROM ACCOUNT WHERE ACCOUNTNAME='{profilename}';")
+        cursor.execute("SELECT ID FROM ACCOUNT WHERE ACCOUNTNAME=:profilename;", {'profilename': profilename})
 
         profile_id = cursor.fetchone()
 
@@ -331,14 +335,14 @@ def viewPostedTweets(request, profilename):
 
         profile_id = profile_id[0]
 
-        cursor.execute(f'''SELECT P.ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
+        cursor.execute('''SELECT P.ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
                            FROM ACCOUNT_LIKES_POST ALP JOIN POST P
                            ON(ALP.POST_ID = P.ID)
                            JOIN ACCOUNT_POSTS_POST APP
                            ON(P.ID = APP.POST_ID)
                            JOIN ACCOUNT A
                            ON(APP.ACCOUNT_ID = A.ID)
-                           WHERE ALP.ACCOUNT_ID = {profile_id};''')
+                           WHERE ALP.ACCOUNT_ID = :profile_id;''', {'profile_id': profile_id})
 
         post_list = dictfetchall(cursor)
         print("Printing liked post for user: " + profilename)
@@ -347,7 +351,10 @@ def viewPostedTweets(request, profilename):
         for post in post_list:
             post["LIKED"] = True
 
-            cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_BOOKMARKS_POST WHERE ACCOUNT_ID={profile_id} AND POST_ID={post['ID']};")
+            cursor.execute(f'''SELECT COUNT(*) 
+                               FROM ACCOUNT_BOOKMARKS_POST 
+                               WHERE ACCOUNT_ID=:profile_id
+                               AND POST_ID=:postID;''', {'profile_id': profile_id, 'postID': post['ID']})
             count = cursor.fetchone()[0]
 
             if count == 1:
