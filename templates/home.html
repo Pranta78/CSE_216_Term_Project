@@ -52,14 +52,6 @@
                 let reader = new FileReader();
 
                 reader.onload = function (e) {
-                    // get loaded data and render thumbnail.
-                    //let x = document.getElementById("media_preview");
-                    //if (x.style.display === "none") {
-                    //    x.style.display = "block";
-                    //}
-                    //else {
-                     //   x.style.display = "none";
-                    //}
                     console.log("File is "+e.target.result);
                     document.getElementById("media_preview").style.display = "block";
                     document.getElementById("media_preview").src = e.target.result;

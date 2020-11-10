@@ -83,14 +83,6 @@ def logout(request):
 
 @auth_or_redirect
 def home_page(request):
-    # user_id = request.session.get("user_id", None)
-    # username= request.session.get("username", None)
-    #
-    # context = {"user_id": user_id,
-    #            "username": username}
-    #
-    # template_name = "home_page.html"
-
     user_id = request.session.get("user_id", None)
     username = request.session.get("username", None)
 
@@ -112,6 +104,7 @@ def home_page(request):
                     ORDER BY P.TIMESTAMP DESC;''')
 
         tweetlist = dictfetchall(cursor)
+
         for tweet in tweetlist:
             with connection.cursor() as cursor:
                 cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={tweet['ID']};")

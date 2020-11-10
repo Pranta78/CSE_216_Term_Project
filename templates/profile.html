@@ -85,9 +85,35 @@
 
     <div class="row">
         <div class="container-fluid">
-            {% include 'profile_navigator.html' %}
+{#                {% include 'profile_navigator.html' with profile_name=profile_name %}#}
+
+            <div class="row" align="center" id="nav_content">
+                <div class="col-10">
+                   <nav class="nav nav nav-pills nav-fill">
+                      <a class="nav-item nav-link {% if tweet_is_active %}active{% endif %}" href="/followers/">Tweets</a>
+                      <a class="nav-item nav-link {% if tweet_and_replies_is_active %}active{% endif %}" href="/profile/">Tweets and replies</a>
+                      <a class="nav-item nav-link {% if media_is_active %}active{% endif %}" href="/media/">Media</a>
+                      <a class="nav-item nav-link {% if likes_is_active %}active{% endif %}" href="{% url 'user_profile_likes' profile_name %}">Likes</a>
+                   </nav>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="container-fluid" id="content">
+                    {% block profile_navcontent %}
+                        {% lorem 3 p %}
+                    {% endblock %}
+                </div>
+            </div>
+
         </div>
     </div>
+
+{#    <script>#}
+{#        document.getElementsByTagName("body")[0].onload = function () {#}
+{#            document.getElementById("like").scrollIntoView(true)#}
+{#        };#}
+{#    </script>#}
 
  </div>
 
