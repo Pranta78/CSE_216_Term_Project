@@ -7,25 +7,37 @@
             <div class="col-8">
                 <div class="form-row">
                     <label for="exampleFormControlTextarea1">What is on your mind?</label>
-                   <textarea class="form-control" placeholder="Post a tweet!" name = "TweetBody" id="inputTweetBody"></textarea>
+                   <textarea class="form-control" placeholder="Post a tweet!" name = "TweetBody" id="inputTweetBody" maxlength="280"></textarea>
                 </div>
              </div>
 
             <div class="form-row">
                 <div class="col-4" align="left">
+
                     <select name="privacy" id="privacyDropDown">
                         <option selected>Choose Audience</option>
                         <option value="PUBLIC">Public</option>
-                        <option value="FOLLOWER">Follower</option>
+                        <option value="FOLLOWER">Public</option>
                         <option value="MENTION">Mention</option>
                     </select>
+
+                    <label for="upload">
+                        <span class="fa fa-file-image-o fa-lg" aria-hidden="true"> Attach</span>
+                        <input type="file" accept="image/*" id="upload" name="file" style="display:none" value="upload">
+                    </label>
+
                  </div>
-                <div class="col-4" align="right">
+                <div class="col-4" align="right" style="margin-top: 8px">
                     <button type="submit" class="btn btn-primary">Tweet!</button>
                 </div>
             </div>
-
         </form>
+
+            <div class="row" align="center">
+                <img class="img-thumbnail" style="display: none;" id="media_preview">
+            </div>
+
+    <br>
 
     <div class="row">
         <div class="col-8">
@@ -34,5 +46,30 @@
             {% endfor %}
         </div>
     </div>
+
+    <script>
+        document.getElementById("upload").onchange = function () {
+                let reader = new FileReader();
+
+                reader.onload = function (e) {
+                    // get loaded data and render thumbnail.
+                    //let x = document.getElementById("media_preview");
+                    //if (x.style.display === "none") {
+                    //    x.style.display = "block";
+                    //}
+                    //else {
+                     //   x.style.display = "none";
+                    //}
+                    console.log("File is "+e.target.result);
+                    document.getElementById("media_preview").style.display = "block";
+                    document.getElementById("media_preview").src = e.target.result;
+
+                };
+
+                // read the image file as a data URL.
+                reader.readAsDataURL(this.files[0]);
+            };
+     </script>
+
 </div>
 {% endblock %}
