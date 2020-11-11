@@ -83,99 +83,17 @@ def user_profile(request, profilename):
     user_id = request.session.get("user_id", None)
     username = request.session.get("username", None)
 
-    if profilename != username:
-        # will be used to replace follow button with profile edit one
-        self_profile = None
+    context = populateProfile(profilename, username, user_id)
 
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT ID FROM ACCOUNT WHERE ACCOUNTNAME = :profilename;", {'profilename': profilename})
-            row = cursor.fetchone()
-
-            if len(row) == 0:
-                return HttpResponse("<h2>Invalid User profile!</h2>")
-            else:
-                profile_id = row[0]
-
-        # The follow button will be disabled if the profile user is followed by the logged in user!
-        follows_user = None
-
-        with connection.cursor() as cursor:
-            cursor.execute('''SELECT COUNT(*)
-                            FROM ACCOUNT_FOLLOWS_ACCOUNT
-                            WHERE ACCOUNT_ID = :user_id
-                            AND 
-                            F_NOTIFICATION_ID = 
-                                (SELECT FOLLOW_NOTIFICATION_ID
-                                FROM FOLLOW_NOTIFICATION
-                                WHERE FOLLOWED_ACCOUNT_ID = :profile_id);''', {'user_id': user_id, 'profile_id': profile_id})
-            row = cursor.fetchone()
-
-            # if user is visiting his own profile
-            if row[0] != 0 or (username == profilename):
-                follows_user = True
-
-        if request.POST.get("follow", None):
-            follows_user = follow_handler(request.POST.get("follow"), username, profilename, user_id, profile_id)
-
-    # user is visiting his own profile
-    else:
-        follows_user = True
-        profile_id = user_id
-        self_profile = True
-
-    # fetch bio, profile photo and header photo
-    profile_photo = ''
-    header_photo = ''
-    bio = ''
-
-    with connection.cursor() as cursor:
-        cursor.execute('''SELECT BIO, PROFILE_PHOTO, HEADER_PHOTO
-                               FROM ACCOUNT WHERE ID = :profile_id;''', {'profile_id': profile_id})
-
-        (bio, profile_photo, header_photo) = cursor.fetchone()
-
-        print("Printing bio, pp and hp")
-        print((bio, profile_photo, header_photo))
-
-    context = {"user_id": user_id,
-               "username": username,
-               "profile_id": profile_id,
-               "profile_name": profilename,
-               "follows_user": follows_user,
-               'bio': bio,
-               'profile_photo': profile_photo,
-               'header_photo': header_photo,
-               'self_profile': self_profile,
-               "profile_is_active": True}
+    if request.POST.get("follow", None):
+        context["follows_user"] = follow_handler(request.POST.get("follow"), username, profilename, user_id, context["profilename"])
 
     template_name = "profile.html"
     return render(request, template_name, context)
 
 
-# @auth_or_redirect
-# def user_profile(request, profilename):
-#     # shows profile for any particular user
-#     user_id = request.session.get("user_id", None)
-#     username = request.session.get("username", None)
-#
-#     if request.POST.get("follow", None):
-#         with connection.cursor() as cursor:
-#             data = cursor.callproc('INSERT_FOLLOW_NOTIF', (username, profilename, 'default'*30))
-#
-#             if data[2] == 'OK':
-#                 print("Follow successful!")
-#                 follows_user = True
-#             else:
-#                 print("ERROR FOLLOWING USER!")
-#                 print(data[2])
-#
-#     context = populateProfile(profilename, username, user_id)
-#
-#     template_name = "profile.html"
-#     return render(request, template_name, context)
-
-
 def populateProfile(profilename, username, user_id):
+    "Returns all context variables a profile should have"
 
     if profilename != username:
         # will be used to replace follow button with profile edit one

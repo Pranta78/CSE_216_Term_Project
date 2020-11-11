@@ -11,7 +11,7 @@
     -->
 <div class="row">
 
-    <div class="col-2" align="center">
+    <div class="col-2" align="center" style="display: block; position: fixed;">
         <nav class="nav nav flex-column nav-pills">
           <a class="nav-item nav-link {% if home_is_active %}active{% endif %}" href="/home/">Home</a>
           <a class="nav-item nav-link {% if profile_is_active %}active{% endif %}" href="/profile/">Profile</a>
@@ -22,7 +22,7 @@
         </nav>
     </div>
 
-    <div class="col-10">
+    <div class="col-10" style="margin-left: 16%">
         {% block skeleton_content %}
             {% lorem 3 p %}
         {% endblock %}

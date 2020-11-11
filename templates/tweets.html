@@ -3,9 +3,13 @@
 {% block profile_navcontent %}
     <div class="row" id="tweet">
         <div class="col-8">
-            {% for post in post_list %}
-                {% include 'ModularPost.html' with post=post index=forloop.counter0%}
-            {% endfor %}
+            {% if post_list|length == 0 %}
+                <p>Nothing to display!</p>
+            {% else %}
+                {% for post in post_list %}
+                    {% include 'ModularPost.html' with post=post index=forloop.counter0%}
+                {% endfor %}
+            {% endif %}
         </div>
     </div>
 {% endblock %}

@@ -91,7 +91,8 @@ def home_page(request):
 
     with connection.cursor() as cursor:
         cursor.execute(f'''SELECT P.ID, P.TEXT, P.TIMESTAMP,
-                    (SELECT ACCOUNTNAME FROM ACCOUNT A WHERE A.ID=APP.ACCOUNT_ID) AUTHOR
+                    (SELECT ACCOUNTNAME FROM ACCOUNT A WHERE A.ID=APP.ACCOUNT_ID) AUTHOR,
+                    (SELECT PROFILE_PHOTO FROM ACCOUNT A WHERE A.ID=APP.ACCOUNT_ID) PROFILE_PHOTO
                     FROM POST P JOIN TWEET T
                     ON (P.ID = T.POST_ID)
                     JOIN ACCOUNT_POSTS_POST	APP
