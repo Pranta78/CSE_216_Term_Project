@@ -2,7 +2,7 @@
 
 {% block skeleton_content %}
     <div class="container-fluid">
-        <form method="POST" action = "/create/tweet/">{% csrf_token %}
+        <form method="POST" enctype="multipart/form-data" action = "/create/tweet/">{% csrf_token %}
 
             <div class="col-8">
                 <div class="form-row">
@@ -23,7 +23,7 @@
 
                     <label for="upload">
                         <span class="fa fa-file-image-o fa-lg" aria-hidden="true"> Attach</span>
-                        <input type="file" accept="image/*" id="upload" name="file" style="display:none" value="upload">
+                        <input type="file" accept="image/*" id="upload" name="Media" style="display:none" value="upload">
                     </label>
 
                  </div>
@@ -34,7 +34,7 @@
         </form>
 
             <div class="row" align="center">
-                <img class="img-thumbnail" style="display: none;" id="media_preview">
+                <img class="img-fluid" style="display: none;" id="media_preview">
             </div>
 
     <br>

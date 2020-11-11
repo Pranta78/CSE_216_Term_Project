@@ -178,6 +178,49 @@ def skeleton(request):
     return render(request, template_name, context)
 
 
+@auth_or_redirect
+def bookmark(request):
+    user_id = request.session.get("user_id")
+    username = request.session.get("username")
+
+    with connection.cursor() as cursor:
+        cursor.execute('''SELECT P.ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
+                           FROM ACCOUNT_BOOKMARKS_POST ALP JOIN POST P
+                           ON(ALP.POST_ID = P.ID)
+                           JOIN ACCOUNT_POSTS_POST APP
+                           ON(P.ID = APP.POST_ID)
+                           JOIN ACCOUNT A
+                           ON(APP.ACCOUNT_ID = A.ID)
+                           WHERE ALP.ACCOUNT_ID = :user_id;''', {'user_id': user_id})
+
+        post_list = dictfetchall(cursor)
+        print("Printing bookmarked post for user: " + username)
+        print(post_list)
+
+        for post in post_list:
+            post["BOOKMARKED"] = True
+
+            cursor.execute(f'''SELECT COUNT(*)
+                               FROM ACCOUNT_LIKES_POST
+                               WHERE ACCOUNT_ID = :user_id
+                               AND POST_ID = :postID;''', {'user_id': user_id, 'postID': post["ID"]})
+
+            count = cursor.fetchone()[0]
+
+            if count == 1:
+                post["LIKED"] = True
+
+    template_name = "bookmark.html"
+    context = {"post_list": post_list,
+               "profile_name": username,
+               "bookmark_is_active": True}
+
+    print("Printing overall context! ")
+    print(context)
+
+    return render(request, template_name, context)
+
+
 def dictfetchall(cursor):
     """Return all rows from a cursor as a dict"""
     columns = [col[0] for col in cursor.description]

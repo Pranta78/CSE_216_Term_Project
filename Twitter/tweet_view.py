@@ -15,21 +15,31 @@ def create_tweet(request):
     if request.POST:
         user_id = request.session['user_id']
         tweetBody = request.POST.get("TweetBody", None)
-        media = request.POST.get("Media", None)
-        
-        allowed_accounts = request.POST.get("privacy", None)
-        if allowed_accounts is None or allowed_accounts == 'Choose Audience':
-            allowed_accounts = "PUBLIC"
-        else:
-            allowed_accounts = allowed_accounts.upper()
+        media = request.FILES.get("Media", None)
 
-        print((user_id, tweetBody, media, allowed_accounts))
+        print((tweetBody, media))
 
-        with connection.cursor() as cursor:
-            newTweetIdVar = 0
-            result = cursor.callproc("CREATE_TWEET", [user_id, tweetBody, media, allowed_accounts, newTweetIdVar])
-            print(result[4])
-            return redirect(reverse('detailedTweetView', kwargs={"tweetID": result[4]}))
+        # To avoid getting a database error
+        if tweetBody or media:
+            allowed_accounts = request.POST.get("privacy", None)
+            if allowed_accounts is None or allowed_accounts == 'Choose Audience':
+                allowed_accounts = "PUBLIC"
+            else:
+                allowed_accounts = allowed_accounts.upper()
+
+            if media:
+                from django.core.files.storage import FileSystemStorage
+                fs = FileSystemStorage()
+                media_name = fs.save(media.name, media)
+                media = fs.url(media_name)
+
+            print((user_id, tweetBody, media, allowed_accounts))
+
+            with connection.cursor() as cursor:
+                newTweetIdVar = 0
+                result = cursor.callproc("CREATE_TWEET", [user_id, tweetBody, media, allowed_accounts, newTweetIdVar])
+                print(result[4])
+                return redirect(reverse('detailedTweetView', kwargs={"tweetID": result[4]}))
 
         return HttpResponse("something went wrong during tweet submission")
 

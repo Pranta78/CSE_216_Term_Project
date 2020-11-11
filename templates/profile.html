@@ -8,12 +8,6 @@
     <div class="row">
        <div class="container" style="display: block; position: relative">
 
-{#            <div style="display: block; position: relative; z-index:1;">#}
-{#                <a href="{{ header_photo|default:"https://www.facebook.com/images/groups/groups-default-cover-photo-2x.png" }}">#}
-{#                    <img class="img-thumbnail" src="{{ header_photo|default:"https://www.facebook.com/images/groups/groups-default-cover-photo-2x.png"}}" style="border: 5px solid #5b80b2; border-radius: 2%; max-width: 100%; z-index: 1; height: 350px; width: auto" alt="Header Photo">#}
-{#                </a>#}
-{#            </div>#}
-
            <a href="{{ header_photo|default:"" }}">
                <div style="width: 100%;height: 350px; background-image: url('{{ header_photo|default:"/media/default_header.png" }}'); background-size: cover; background-position: center; border: 5px solid #5b80b2; border-radius: 2%;"></div>
            </a>
@@ -22,12 +16,6 @@
              <div style="display: block; position: relative; height: 200px; width: 200px; z-index: 999; margin: -10% 0 0% 5%; background-image: url('{{ profile_photo|default:"/media/default_profile.png" }}'); background-size: cover; background-position: center; border: 5px solid #555; border-radius: 50%; max-width: 100%;">
              </div>
            </a>
-
-{#            <div style="display: block; position: relative; height: 200px; width: 200px; z-index: 999; margin: -10% 0 0% 5%;">#}
-{#               <a href="{{ profile_photo|default:""}}">#}
-{#                    <img class="img-fluid" src="{{ profile_photo|default:"/media/default_profile.png"}}" style="border: 5px solid #555; border-radius: 50%;max-width: 100%; z-index: 999;" alt="Profile Pic">#}
-{#               </a>#}
-{#            </div>#}
 
         </div>
     </div>
@@ -67,17 +55,18 @@
     </div>
 
     <div class="row">
-        <p>{{ bio|default:"No bio available" }}</p>
+        <p>{{ bio|default:"No bio available"|linebreaksbr }}</p>
     </div>
 
     <div class="row">
-        <div class="container-fluid">
-            <a href="{% url 'user_profile_follower' profile_name %}" style="background-color: #a41515; color: white">
-                 Followers
+        <div class="btn-toolbar">
+            <a href="{% url 'user_profile_follower' profile_name %}">
+                 <button class="btn btn-primary">
+                     Followers
+                 </button>
             </a>
-            <label>    </label>
-            <a href="{% url 'user_profile_following' profile_name %}" style="background-color: #205067; color: white">
-                People Following
+            <a href="{% url 'user_profile_following' profile_name %}">
+                 <button class="btn btn-primary">Following</button>
             </a>
         </div>
     </div>

@@ -1,0 +1,23 @@
+{% extends "skeleton.html" %}
+
+{% block skeleton_content %}
+
+    <h3 style="color: white; background-color: rgb(29, 161, 242)">
+        Posts you've bookmarked!
+    </h3>
+
+    <br>
+
+    <div class="row" id="bookmark">
+        <div class="col-8">
+            {% if post_list|length == 0 %}
+                <p>Nothing to display! Bookmark some posts first!</p>
+            {% else %}
+                {% for post in post_list %}
+                    {% include 'ModularPost.html' with post=post index=forloop.counter0%}
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
+{% endblock %}

@@ -18,7 +18,7 @@ from django.conf.urls import url
 from django.conf import settings
 from django.conf.urls.static import static
 from .views import (create_account, login, home_page,
-                    logout, skeleton,)
+                    logout, skeleton, bookmark)
 
 from .profile_view import profile, profile_edit, user_profile, follower, following, viewLikedPosts, viewPostedTweets
 from .message_view import message, inbox
@@ -36,6 +36,7 @@ urlpatterns = [
     url(r'^profile-edit/', profile_edit),
     url(r'^skeleton/', skeleton),
     url(r'^messages/', message),
+    url(r'^bookmarks/', bookmark),
     url(r'^user/(\w+)/$', user_profile, name='user_profile'),
     url(r'^user/(\w+)/followers/$', follower, name='user_profile_follower'),
     url(r'^user/(\w+)/following/$', following, name='user_profile_following'),

@@ -1,0 +1,17 @@
+{% extends "skeleton.html" %}
+
+{% block skeleton_content %}
+    <h4>
+        Posts with hashtag #{{ hashtag }}
+    </h4>
+
+    <br>
+
+    <div class="row" id="hashtag">
+        <div class="col-8">
+            {% for post in post_list %}
+                {% include 'ModularPost.html' with post=post index=forloop.counter0%}
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
