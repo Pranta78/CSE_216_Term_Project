@@ -114,16 +114,8 @@ def user_profile(request, profilename):
             if row[0] != 0 or (username == profilename):
                 follows_user = True
 
-        if request.POST:
-            with connection.cursor() as cursor:
-                data = cursor.callproc('INSERT_FOLLOW_NOTIF', (username, profilename, 'default'*30))
-
-                if data[2] == 'OK':
-                    print("Follow successful!")
-                    follows_user = True
-                else:
-                    print("ERROR FOLLOWING USER!")
-                    print(data[2])
+        if request.POST.get("follow", None):
+            follows_user = follow_handler(request.POST.get("follow"), username, profilename, user_id, profile_id)
 
     # user is visiting his own profile
     else:
@@ -166,7 +158,7 @@ def user_profile(request, profilename):
 #     user_id = request.session.get("user_id", None)
 #     username = request.session.get("username", None)
 #
-#     if request.POST:
+#     if request.POST.get("follow", None):
 #         with connection.cursor() as cursor:
 #             data = cursor.callproc('INSERT_FOLLOW_NOTIF', (username, profilename, 'default'*30))
 #
@@ -258,7 +250,6 @@ def viewLikedPosts(request, profilename):
     :return: a list of dictionaries with key id, time, text, media, author's profile picture
             containing containing all posts which were liked by the user
     """
-
     user_id = request.session.get("user_id")
     username = request.session.get("username")
 
@@ -311,6 +302,9 @@ def viewLikedPosts(request, profilename):
 
     context = {**parent_context, **child_context}
 
+    if request.POST.get("follow", None):
+        context["follows_user"] = follow_handler(request.POST.get("follow"), username, profilename, user_id, profile_id)
+
     print("Printing overall context! ")
     print(context)
 
@@ -336,42 +330,52 @@ def viewPostedTweets(request, profilename):
         profile_id = profile_id[0]
 
         cursor.execute('''SELECT P.ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
-                           FROM ACCOUNT_LIKES_POST ALP JOIN POST P
-                           ON(ALP.POST_ID = P.ID)
-                           JOIN ACCOUNT_POSTS_POST APP
-                           ON(P.ID = APP.POST_ID)
-                           JOIN ACCOUNT A
-                           ON(APP.ACCOUNT_ID = A.ID)
-                           WHERE ALP.ACCOUNT_ID = :profile_id;''', {'profile_id': profile_id})
+                          FROM TWEET T JOIN POST P
+                          ON(T.POST_ID = P.ID)
+                          JOIN ACCOUNT_POSTS_POST APP
+                          ON(P.ID = APP.POST_ID)
+                          JOIN ACCOUNT A
+                          ON(APP.ACCOUNT_ID = A.ID)
+                          WHERE APP.ACCOUNT_ID = :profile_id
+                          AND IS_USER_AUDIENCE(:username, P.ID) = 1
+                          ORDER BY P.TIMESTAMP ASC;''', {'profile_id': profile_id, 'username': username})
 
         post_list = dictfetchall(cursor)
-        print("Printing liked post for user: " + profilename)
+        print("Printing posted tweets for user: " + profilename)
         print(post_list)
 
         for post in post_list:
-            post["LIKED"] = True
+            cursor.execute('''SELECT COUNT(*) FROM ACCOUNT_LIKES_POST
+                              WHERE ACCOUNT_ID=:user_id
+                              AND POST_ID=:post_id;''', {'user_id': user_id, 'post_id': post["ID"]})
+            count = cursor.fetchone()[0]
+
+            if count == 1:
+                post["LIKED"] = True
 
             cursor.execute(f'''SELECT COUNT(*) 
                                FROM ACCOUNT_BOOKMARKS_POST 
-                               WHERE ACCOUNT_ID=:profile_id
-                               AND POST_ID=:postID;''', {'profile_id': profile_id, 'postID': post['ID']})
+                               WHERE ACCOUNT_ID=:user_id
+                               AND POST_ID=:postID;''', {'user_id': user_id, 'postID': post['ID']})
             count = cursor.fetchone()[0]
 
             if count == 1:
                 post["BOOKMARKED"] = True
 
-    template_name = "likes.html"
+    template_name = "tweets.html"
     child_context = {"post_list": post_list,
-                     "likes_is_active": True,
+                     "tweet_is_active": True,
                      "profile_name": profilename}
 
     context = {**parent_context, **child_context}
+
+    if request.POST.get("follow", None):
+        context["follows_user"] = follow_handler(request.POST.get("follow"), username, profilename, user_id, profile_id)
 
     print("Printing overall context! ")
     print(context)
 
     return render(request, template_name, context)
-
 
 
 def fetchBookmarkedPosts(userID):
@@ -444,6 +448,40 @@ def following(request, profilename):
                'profilelist': dict}
 
     return render(request, template_name, context)
+
+
+def follow_handler(action, username, profilename, user_id, profile_id):
+    # Toggle between follow and unfollow
+    print("Value of follow action = ")
+    print(action)
+
+    with connection.cursor() as cursor:
+        # Follow the user
+        if action == "follow":
+            data = cursor.callproc('INSERT_FOLLOW_NOTIF', (username, profilename, 'default' * 30))
+
+            if data[2] == 'OK':
+                print("Follow successful!")
+                return True
+            else:
+                print("ERROR FOLLOWING USER!")
+                print(data[2])
+
+        # Delete the corresponding follow entry
+        elif action == "unfollow":
+            cursor.execute('''DELETE FROM ACCOUNT_FOLLOWS_ACCOUNT
+                              WHERE ACCOUNT_ID = :follower_id
+                              AND F_NOTIFICATION_ID =
+                              (SELECT FOLLOW_NOTIFICATION_ID
+                              FROM FOLLOW_NOTIFICATION
+                              WHERE FOLLOWED_ACCOUNT_ID = :followed_id 
+                              )''', {'follower_id': user_id, 'followed_id': profile_id})
+            connection.commit()
+            print("Follow notif Deletion performed!")
+            return None
+
+        else:
+            print("\tINVALID FOLLOW OR UNFOLLOW")
 
 
 def dictfetchall(cursor):

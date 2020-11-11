@@ -47,9 +47,10 @@
 
               {% else %}
                   <form method="post">{% csrf_token %}
-                      <button type="submit" class="btn {% if follows_user %}disabled{% else %}btn-primary{% endif %}" name="follow">
+                    <input type="hidden" name="follow" value="{% if follows_user %}unfollow{% else %}follow{% endif %}">
+                      <button type="submit" class="btn btn-primary">
                           {% if follows_user %}
-                            Following
+                            Unfollow
                           {% else %}
                             Follow
                           {% endif %}
@@ -90,13 +91,15 @@
             <div class="row" align="center" id="nav_content">
                 <div class="col-10">
                    <nav class="nav nav nav-pills nav-fill">
-                      <a class="nav-item nav-link {% if tweet_is_active %}active{% endif %}" href="/followers/">Tweets</a>
+                      <a class="nav-item nav-link {% if tweet_is_active %}active{% endif %}" href="{% url 'user_profile_tweets' profile_name %}">Tweets</a>
                       <a class="nav-item nav-link {% if tweet_and_replies_is_active %}active{% endif %}" href="/profile/">Tweets and replies</a>
                       <a class="nav-item nav-link {% if media_is_active %}active{% endif %}" href="/media/">Media</a>
                       <a class="nav-item nav-link {% if likes_is_active %}active{% endif %}" href="{% url 'user_profile_likes' profile_name %}">Likes</a>
                    </nav>
                 </div>
             </div>
+
+            <br>
 
             <div class="row">
                 <div class="container-fluid" id="content">
@@ -109,11 +112,17 @@
         </div>
     </div>
 
-{#    <script>#}
-{#        document.getElementsByTagName("body")[0].onload = function () {#}
-{#            document.getElementById("like").scrollIntoView(true)#}
-{#        };#}
-{#    </script>#}
+    <script>
+        if(document.getElementById("like"))
+            document.getElementsByTagName("body")[0].onload = function () {
+                document.getElementById("like").scrollIntoView(true);
+            };
+
+        if(document.getElementById("tweet"))
+            document.getElementsByTagName("body")[0].onload = function () {
+                document.getElementById("tweet").scrollIntoView(true);
+            };
+    </script>
 
  </div>
 
