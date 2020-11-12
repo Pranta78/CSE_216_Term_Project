@@ -57,27 +57,36 @@ def create_comment(request, tweetID, parentCommentID):
         commentBody = request.POST.get("CommentBody", None)
         media = request.POST.get("Media", None)
 
-        allowed_accounts = request.POST.get("privacy", None)#TODO This is pointless for comments. Update schema
+        # To avoid getting a database error
+        if commentBody or media:
+            allowed_accounts = request.POST.get("privacy", None)#TODO This is pointless for comments. Update schema
 
-        if allowed_accounts is None:
-            allowed_accounts = "PUBLIC"
-        else:
-            allowed_accounts = allowed_accounts.upper()
-
-        print((user_id, tweetID, commentBody, media, allowed_accounts))
-
-        with connection.cursor() as cursor:
-            newCommentID = 0
-            # I was getting errors with default parameters so a create_root_comment proc was added
-            if parentCommentID is None:
-                result = cursor.callproc("CREATE_ROOT_COMMENT", [user_id, tweetID, commentBody, media, allowed_accounts, newCommentID])
+            if allowed_accounts is None:
+                allowed_accounts = "PUBLIC"
             else:
-                result = cursor.callproc("CREATE_COMMENT",
-                                         [user_id, tweetID, parentCommentID, commentBody, media, allowed_accounts, newCommentID])
-            print(result[4])
-            return redirect(reverse('detailedTweetView', kwargs={"tweetID": tweetID}))#TODO add comment chain focused view
+                allowed_accounts = allowed_accounts.upper()
 
-        return HttpResponse("something went wrong during comment submission")
+            if media:
+                from django.core.files.storage import FileSystemStorage
+                fs = FileSystemStorage()
+                media_name = fs.save(media.name, media)
+                media = fs.url(media_name)
+
+            print((user_id, tweetID, commentBody, media, allowed_accounts))
+
+            with connection.cursor() as cursor:
+                newCommentID = 0
+                # I was getting errors with default parameters so a create_root_comment proc was added
+                if parentCommentID is None:
+                    result = cursor.callproc("CREATE_ROOT_COMMENT", [user_id, tweetID, commentBody, media, allowed_accounts, newCommentID])
+                else:
+                    result = cursor.callproc("CREATE_COMMENT",
+                                             [user_id, tweetID, parentCommentID, commentBody, media, allowed_accounts, newCommentID])
+                print(result[4])
+                return redirect(reverse('detailedTweetView', kwargs={"tweetID": tweetID}))#TODO add comment chain focused view
+
+            return HttpResponse("something went wrong during comment submission")
+
     return HttpResponse("invalid GET request on POST URL")
 
 
@@ -90,7 +99,7 @@ def __organizeCommentChains(comment_results):
 
         comment = {
             "AUTHOR": result_row[1],
-            "AUTHORPHOTO": result_row[2],
+            "PROFILE_PHOTO": result_row[2],
             "TEXT": result_row[3],
             "MEDIA": result_row[4],
             "TIMESTAMP": result_row[5],

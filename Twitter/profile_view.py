@@ -124,7 +124,8 @@ def user_profile(request, profilename):
     context = populateProfile(profilename, username, user_id)
 
     if request.POST.get("follow", None):
-        context["follows_user"] = follow_handler(request.POST.get("follow"), username, profilename, user_id, context["profilename"])
+        context["follows_user"] = follow_handler(request.POST.get("follow"), username, profilename, user_id, context["profile_id"])
+        context["follower_count"], context["following_count"] = populateFollowInfo(profilename)
 
     template_name = "profile.html"
     return render(request, template_name, context)
@@ -176,10 +177,12 @@ def populateProfile(profilename, username, user_id):
     bio = ''
 
     with connection.cursor() as cursor:
-        cursor.execute(f'''SELECT BIO, PROFILE_PHOTO, HEADER_PHOTO
+        cursor.execute('''SELECT BIO, PROFILE_PHOTO, HEADER_PHOTO
                            FROM ACCOUNT WHERE ID = :profile_id;''', {'profile_id': profile_id})
 
         (bio, profile_photo, header_photo) = cursor.fetchone()
+
+        follower_count, following_count = populateFollowInfo(profilename)
 
         print("Printing bio, pp and hp")
         print((bio, profile_photo, header_photo))
@@ -193,10 +196,26 @@ def populateProfile(profilename, username, user_id):
                'profile_photo': profile_photo,
                'header_photo': header_photo,
                'self_profile': self_profile,
-               "profile_is_active": True
-               }
+               "profile_is_active": True,
+               "follower_count": follower_count,
+               "following_count": following_count}
 
     return context
+
+
+def populateFollowInfo(profilename):
+    with connection.cursor() as cursor:
+        cursor.execute('''SELECT COUNT(FOLLOWER) FROM FOLLOWER
+                                 WHERE FOLLOWED = :followed_name;''', {'followed_name': profilename})
+
+        follower_count = cursor.fetchone()[0]
+
+        cursor.execute('''SELECT COUNT(FOLLOWED) FROM FOLLOWER
+                                         WHERE FOLLOWER = :follower_name;''', {'follower_name': profilename})
+
+        following_count = cursor.fetchone()[0]
+
+    return follower_count, following_count
 
 
 @auth_or_redirect
@@ -261,6 +280,7 @@ def viewLikedPosts(request, profilename):
 
     if request.POST.get("follow", None):
         context["follows_user"] = follow_handler(request.POST.get("follow"), username, profilename, user_id, profile_id)
+        context["follower_count"], context["following_count"] = populateFollowInfo(profilename)
 
     print("Printing overall context! ")
     print(context)
@@ -328,6 +348,7 @@ def viewPostedTweets(request, profilename):
 
     if request.POST.get("follow", None):
         context["follows_user"] = follow_handler(request.POST.get("follow"), username, profilename, user_id, profile_id)
+        context["follower_count"], context["following_count"] = populateFollowInfo(profilename)
 
     print("Printing overall context! ")
     print(context)
@@ -395,6 +416,7 @@ def viewPostedTweets(request, profilename):
 
     if request.POST.get("follow", None):
         context["follows_user"] = follow_handler(request.POST.get("follow"), username, profilename, user_id, profile_id)
+        context["follower_count"], context["following_count"] = populateFollowInfo(profilename)
 
     print("Printing overall context! ")
     print(context)

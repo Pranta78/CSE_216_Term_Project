@@ -36,7 +36,7 @@
               {% else %}
                   <form method="post">{% csrf_token %}
                     <input type="hidden" name="follow" value="{% if follows_user %}unfollow{% else %}follow{% endif %}">
-                      <button type="submit" class="btn btn-primary">
+                      <button type="submit" class="btn btn-primary" id="followbtn">
                           {% if follows_user %}
                             Unfollow
                           {% else %}
@@ -61,12 +61,12 @@
     <div class="row">
         <div class="btn-toolbar">
             <a href="{% url 'user_profile_follower' profile_name %}">
-                 <button class="btn btn-primary">
-                     Followers
+                 <button class="btn btn-light">
+                    {{ follower_count }} Followers
                  </button>
             </a>
             <a href="{% url 'user_profile_following' profile_name %}">
-                 <button class="btn btn-primary">Following</button>
+                 <button class="btn btn-light">{{ following_count }} Following</button>
             </a>
         </div>
     </div>

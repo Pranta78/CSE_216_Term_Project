@@ -75,7 +75,7 @@ def detailed_tweet_view(request, tweetID):
             
             tweet = {
                 "AUTHOR": result[0],
-                "AUTHORPHOTO": result[1],
+                "PROFILE_PHOTO": result[1],
                 "TEXT": result[2],
                 "MEDIA": result[3],
                 "TIMESTAMP": result[4],

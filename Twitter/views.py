@@ -90,7 +90,7 @@ def home_page(request):
     tweetlist = None
 
     with connection.cursor() as cursor:
-        cursor.execute(f'''SELECT P.ID, P.TEXT, P.TIMESTAMP,
+        cursor.execute(f'''SELECT T.TWEET_ID ID, P.TEXT, P.MEDIA, P.TIMESTAMP, P.ID POST_ID,
                     (SELECT ACCOUNTNAME FROM ACCOUNT A WHERE A.ID=APP.ACCOUNT_ID) AUTHOR,
                     (SELECT PROFILE_PHOTO FROM ACCOUNT A WHERE A.ID=APP.ACCOUNT_ID) PROFILE_PHOTO
                     FROM POST P JOIN TWEET T
@@ -108,13 +108,13 @@ def home_page(request):
 
         for tweet in tweetlist:
             with connection.cursor() as cursor:
-                cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={tweet['ID']};")
+                cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={tweet['POST_ID']};")
                 count = cursor.fetchone()[0]
 
                 if count == 1:
                     tweet["LIKED"] = True
 
-                cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_BOOKMARKS_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={tweet['ID']};")
+                cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_BOOKMARKS_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={tweet['POST_ID']};")
                 count = cursor.fetchone()[0]
 
                 if count == 1:
@@ -124,36 +124,61 @@ def home_page(request):
         print(tweetlist)
 
     if request.POST.get("like", None):
+        # We need to fetch post id
         tweetID = int(request.POST.get("postID", None))
         index = int(request.POST.get("indexID", None))
-        print("\t Like was called for tweet ID "+str(tweetID)+", index= "+str(index))
+
+        with connection.cursor() as cursor:
+            cursor.execute('''SELECT POST_ID FROM TWEET
+                              WHERE TWEET_ID = :tweet_id''', {'tweet_id': tweetID})
+
+            post_id = cursor.fetchone()
+
+            if post_id is None:
+                return HttpResponse("No post id found for given tweet id")
+            else:
+                post_id = post_id[0]
+
+        print("\t Like was called for post ID "+str(post_id)+", index= "+str(index))
         # got user input, now update the database
         with connection.cursor() as cursor:
             # if liked, then unlike, if not liked, then add to like list
             if tweetlist[index].get("LIKED", None):
-                cursor.execute(f"DELETE FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={tweetID};")
+                cursor.execute(f"DELETE FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={post_id};")
                 connection.commit()
                 tweetlist[index]["LIKED"] = None
 
             else:
-                cursor.execute(f"INSERT INTO ACCOUNT_LIKES_POST VALUES({user_id}, {tweetID});")
+                cursor.execute(f"INSERT INTO ACCOUNT_LIKES_POST VALUES({user_id}, {post_id});")
                 connection.commit()
                 tweetlist[index]["LIKED"] = True
 
     if request.POST.get("bookmark", None):
         tweetID = int(request.POST.get("postID", None))
         index = int(request.POST.get("indexID", None))
-        print("\t Bookmark was called for tweet ID " + str(tweetID) + ", index= " + str(index))
+
+        with connection.cursor() as cursor:
+            cursor.execute('''SELECT POST_ID FROM TWEET
+                              WHERE TWEET_ID = :tweet_id''', {'tweet_id': tweetID})
+
+            post_id = cursor.fetchone()
+
+            if post_id is None:
+                return HttpResponse("No post id found for given tweet id")
+            else:
+                post_id = post_id[0]
+
+        print("\t Bookmark was called for tweet ID " + str(post_id) + ", index= " + str(index))
         # got user input, now update the database
         with connection.cursor() as cursor:
             # if liked, then unlike, if not liked, then add to like list
             if tweetlist[index].get("BOOKMARKED", None):
-                cursor.execute(f"DELETE FROM ACCOUNT_BOOKMARKS_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={tweetID};")
+                cursor.execute(f"DELETE FROM ACCOUNT_BOOKMARKS_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={post_id};")
                 connection.commit()
                 tweetlist[index]["BOOKMARKED"] = None
 
             else:
-                cursor.execute(f"INSERT INTO ACCOUNT_BOOKMARKS_POST VALUES({user_id}, {tweetID});")
+                cursor.execute(f"INSERT INTO ACCOUNT_BOOKMARKS_POST VALUES({user_id}, {post_id});")
                 connection.commit()
                 tweetlist[index]["BOOKMARKED"] = True
 
