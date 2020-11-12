@@ -60,14 +60,17 @@ def detailed_tweet_view(request, tweetID):
 
         if result is not None:
             #TODO VIEWS to alleviate the suffering
-            cursor.execute("SELECT a.id, a.ACCOUNTNAME, a.PROFILE_PHOTO, p.TEXT, p.MEDIA, p.TIMESTAMP, c.COMMENT_ID, c.PARENT_COMMENT_ID "
-                           "FROM TWEET t "
-                           "JOIN TWEET_COMMENT c on(t.TWEET_ID = c.TWEET_ID) "
-                           "JOIN POST p on(c.POST_ID =  p.ID) "
-                           "JOIN ACCOUNT_POSTS_POST app on(app.POST_ID = c.POST_ID) "
-                           "JOIN ACCOUNT a on (app.ACCOUNT_ID = a.ID) "
-                           "WHERE t.TWEET_ID = %s "
-                           "ORDER BY p.TIMESTAMP ", [tweetID])#orderby ensures that root of the chain is accessed first
+            cursor.execute( "SELECT a.id, a.ACCOUNTNAME, a.PROFILE_PHOTO, p.TEXT, p.MEDIA, p.TIMESTAMP, c.COMMENT_ID, c.PARENT_COMMENT_ID, pa.ACCOUNTNAME "
+                            "FROM TWEET t "
+                            "JOIN TWEET_COMMENT c on (t.TWEET_ID = c.TWEET_ID)"
+                            "JOIN TWEET_COMMENT pc on (pc.COMMENT_ID = c.PARENT_COMMENT_ID)"
+                            "JOIN ACCOUNT_POSTS_POST papp on(papp.POST_ID = pc.POST_ID)"
+                            "JOIN ACCOUNT pa on(papp.ACCOUNT_ID = pa.ID)"
+                            "JOIN POST p on(c.POST_ID = p.ID)"
+                            "JOIN ACCOUNT_POSTS_POST app on(app.POST_ID = c.POST_ID)"
+                            "JOIN ACCOUNT a on (app.ACCOUNT_ID = a.ID)"
+                            "WHERE t.TWEET_ID = %s "
+                            "ORDER BY p.TIMESTAMP ", [tweetID])#orderby ensures that root of the chain is accessed first
             comment_results = cursor.fetchall()
             print(comment_results)
             comment_chains = __organizeCommentChains(comment_results)
