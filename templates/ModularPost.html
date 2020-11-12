@@ -6,6 +6,7 @@
 <!-- end-->
 
 <div class="card" id="{{ postID }}">
+
     <div class="card-body">
 
         <img src="{{ post.PROFILE_PHOTO|default:"/media/default_profile.png" }}"  width="50px" height="50px" style="border-radius: 50%;">
@@ -39,6 +40,7 @@
 
         <button class="btn"><i class="fa fa-retweet fa-lg"></i> Retweet</button>
         <button class="btn"><i class="fa fa-comment-o fa-lg"></i> Comment</button>
+
         <button type="submit" class="btn" name="like" value="like"><i class="fa fa-heart{% if not post.LIKED %}-o{% endif %} fa-lg" {% if post.LIKED %}style="color: rgb(224,36,94);" {% endif %}></i>
             {% if not post.LIKED %}
                 Like
@@ -51,7 +53,6 @@
         </button>
 
     </form>
-
 </div>
     <br>
 {% endblock %}

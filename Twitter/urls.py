@@ -23,7 +23,8 @@ from .views import (create_account, login, home_page,
 from .profile_view import profile, profile_edit, user_profile, follower, following, viewLikedPosts, viewPostedTweets
 from .message_view import message, inbox
 
-from .tweet_view import detailed_tweet_view, create_tweet, create_reply_comment, create_reply_tweet
+from .tweet_view import detailed_tweet_view, create_tweet
+from .comment_view import create_reply_tweet, create_reply_comment
 from .auth import deco_test
 
 urlpatterns = [

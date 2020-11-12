@@ -193,7 +193,8 @@ def populateProfile(profilename, username, user_id):
                'profile_photo': profile_photo,
                'header_photo': header_photo,
                'self_profile': self_profile,
-               "profile_is_active": True}
+               "profile_is_active": True
+               }
 
     return context
 
