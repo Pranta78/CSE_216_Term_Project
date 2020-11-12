@@ -2,22 +2,22 @@
 
 {% block skeleton_content %}
     <div class="container-fluid">
-        <form method="POST">{% csrf_token %}
+        <form method="POST" action = "/create/tweet/">{% csrf_token %}
 
             <div class="col-8">
                 <div class="form-row">
                     <label for="exampleFormControlTextarea1">What is on your mind?</label>
-                   <textarea class="form-control" placeholder="Post a tweet!" name="tweet"></textarea>
+                   <textarea class="form-control" placeholder="Post a tweet!" name = "TweetBody" id="inputTweetBody"></textarea>
                 </div>
              </div>
 
             <div class="form-row">
                 <div class="col-4" align="left">
-                    <select name="privacy">
+                    <select name="privacy" id="privacyDropDown">
                         <option selected>Choose Audience</option>
-                        <option value="1">Public</option>
-                        <option value="2">Follower</option>
-                        <option value="3">Mention</option>
+                        <option value="PUBLIC">Public</option>
+                        <option value="FOLLOWER">Follower</option>
+                        <option value="MENTION">Mention</option>
                     </select>
                  </div>
                 <div class="col-4" align="right">
@@ -30,7 +30,7 @@
         <div class="col-8">
 {#        <ul class="list-group">#}
             {% for tweet in tweet_list %}
-                {% include 'Tweet.html' with tweet=tweet %}
+                {% include 'ModularPost.html' with post=tweet %}
             {% endfor %}
 {#        </ul>#}
         </div>

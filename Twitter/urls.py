@@ -19,10 +19,14 @@ from .views import (create_account, login, home_page,
                     profile_edit, test, logout, navbar, profile,
                     skeleton, message, inbox, user_profile)
 
+from .tweet_view import detailed_tweet_view, create_tweet
+from .comment_view import create_reply_tweet, create_reply_comment
+from .auth import deco_test
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^create-account/', create_account),
-    url(r'^login/', login),
+    url(r'^login/', login, name='login'),
     url(r'^logout/', logout),
     url(r'^home/', home_page),
     url(r'^profile/', profile),
@@ -33,4 +37,9 @@ urlpatterns = [
     url(r'^messages/', message),
     url(r'^user/(\w+)/$', user_profile, name='user_profile'),
     url(r'^inbox/(\w+)/$', inbox, name='user_inbox'),
+    url(r'^create/tweet/', create_tweet),
+    url(r'^create/reply/tweet/(?P<tweetID>\w+)/$', create_reply_tweet),
+    url(r'^create/reply/comment/(?P<commentID>\w+)/$', create_reply_comment),
+    url(r'^tweet/(?P<tweetID>\w+)/$', detailed_tweet_view, name='detailedTweetView'),
+    url(r'^decotest/', deco_test),
 ]

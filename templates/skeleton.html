@@ -1,19 +1,14 @@
 {% extends "base.html" %}
 
 {% block content %}
-
-{% if not user_id %}
-
-    <div class="container" align="center">
-        <form action="/login/" method="GET">
-            <h1>You have to login first!</h1>
-            <br>
-            <input type="Submit" value="Log in" class="btn btn-primary">
-        </form>
-    </div>
-
-{% else %}
-
+    <!--
+    auth should not happen in template, redirect to login outside in View
+    Do not couple login with templates
+    The this was before, the skeleton was unusable to view tweets without login in the tweetdetailview
+    Which any social site lets you do.
+    The skeleton is useful. But it should only contain the navbar and the side bar
+    use auth instead
+    -->
 <div class="row">
 
     <div class="col-2" align="center">
@@ -34,6 +29,4 @@
     </div>
 
 </div>
-
-{% endif %}
 {% endblock %}

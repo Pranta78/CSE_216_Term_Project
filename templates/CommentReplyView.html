@@ -1,0 +1,38 @@
+{% extends "skeleton.html" %}
+<!--the modular post html should not concern itself with showing comments -->
+{% block skeleton_content %}
+    {% include "ModularPost.html" with post=comment %}
+    <!-- TODO make comments smaller??-->
+    <div class = "container">
+    </div>
+
+    <!--TODO make this fixed to the bottom of the screen so that user doesn't have to scroll -->
+    {% if USERLOGGEDIN %}
+        <form method="POST" action = "/create/reply/comment/{{ COMMENTID }}/">{% csrf_token %}
+
+            <div class="col-8">
+                <div class="form-row">
+                   <textarea class="form-control" placeholder="Reply?" name = "CommentBody" id="inputCommentBody"></textarea>
+                </div>
+             </div>
+
+            <div class="form-row">
+                <div class="col-4" align="left">
+                    <!--
+                    Privacy settings for comments don't make sense. Kept for now
+                    This should be an attribute for tweet, not post base entity
+                    -->
+                    <select name="privacy" id="privacyDropDown">
+                        <option value="PUBLIC" selected="selected">Public</option>
+                        <option value="FOLLOWER">Follower</option>
+                        <option value="MENTION">Mention</option>
+                    </select>
+                 </div>
+                <div class="col-4" align="right">
+                    <button type="submit" class="btn btn-primary">Comment</button>
+                </div>
+            </div>
+        </form>
+    {% endif %}
+
+{% endblock %}
