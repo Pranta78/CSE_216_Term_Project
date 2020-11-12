@@ -19,7 +19,8 @@ from .views import (create_account, login, home_page,
                     profile_edit, test, logout, navbar, profile,
                     skeleton, message, inbox, user_profile)
 
-from .tweet_view import detailed_tweet_view, create_tweet, create_reply_comment, create_reply_tweet
+from .tweet_view import detailed_tweet_view, create_tweet
+from .comment_view import create_reply_tweet, create_reply_comment
 from .auth import deco_test
 
 urlpatterns = [

@@ -1,28 +1,18 @@
 {% extends "skeleton.html" %}
 <!--the modular post html should not concern itself with showing comments -->
 {% block skeleton_content %}
-    {% include "ModularPost.html" with post=tweet %}
+    {% include "ModularPost.html" with post=comment %}
     <!-- TODO make comments smaller??-->
-
-    {% for commentChain in COMMENTCHAINS %}
-        <div class="card">
-            <div class="card-body">
-            {% for comment in commentChain %}
-                {% include "ModularPost.html" with post=comment %}
-            {% endfor %}
-            </div>
-        </div>
-    {% endfor %}
-
+    <div class = "container">
+    </div>
 
     <!--TODO make this fixed to the bottom of the screen so that user doesn't have to scroll -->
     {% if USERLOGGEDIN %}
-        <a id ="tweet-reply-box">
-        <form method="POST" action = "/create/reply/tweet/{{ TWEETID }}/">{% csrf_token %}
+        <form method="POST" action = "/create/reply/comment/{{ COMMENTID }}/">{% csrf_token %}
 
             <div class="col-8">
                 <div class="form-row">
-                   <textarea class="form-control" placeholder="Reply?" name = "CommentBody" id="inputCommentBody" ></textarea>
+                   <textarea class="form-control" placeholder="Reply?" name = "CommentBody" id="inputCommentBody"></textarea>
                 </div>
              </div>
 
@@ -43,7 +33,6 @@
                 </div>
             </div>
         </form>
-        </a>
     {% endif %}
 
 {% endblock %}
