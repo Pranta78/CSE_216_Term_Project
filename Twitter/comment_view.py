@@ -26,6 +26,7 @@ def create_reply_comment(request, commentID):
                                          "JOIN ACCOUNT_POSTS_POST app on(app.POST_ID = c.POST_ID)"
                                          "JOIN ACCOUNT a on (app.ACCOUNT_ID = a.ID)"
                                          "WHERE c.COMMENT_ID =  %s", [commentID]).fetchone()
+
         if result is not None:
             if request.POST:
                 return create_comment(request,result[0], commentID)
@@ -94,6 +95,7 @@ def __organizeCommentChains(comment_results):
             "TEXT": result_row[3],
             "MEDIA": result_row[4],
             "TIMESTAMP": result_row[5],
+            "replied_to": result_row[8],
             "COMMENTLINK": "/create/reply/comment/%s" % comment_id,
         }
 
