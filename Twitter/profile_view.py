@@ -244,7 +244,7 @@ def viewLikedPosts(request, profilename):
         # IS_USER_AUDIENCE function is called to check whether the visitor (with username as user name)
         # has sufficient permission to see the post
 
-        cursor.execute('''SELECT P.ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
+        cursor.execute('''SELECT P.ID POST_ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
                            FROM ACCOUNT_LIKES_POST ALP JOIN POST P
                            ON(ALP.POST_ID = P.ID)
                            JOIN ACCOUNT_POSTS_POST APP
@@ -264,14 +264,14 @@ def viewLikedPosts(request, profilename):
             cursor.execute(f'''SELECT COUNT(*)
                                FROM ACCOUNT_BOOKMARKS_POST
                                WHERE ACCOUNT_ID = :profile_id
-                               AND POST_ID = :postID;''', {'profile_id': profile_id, 'postID': post["ID"]})
+                               AND POST_ID = :postID;''', {'profile_id': profile_id, 'postID': post["POST_ID"]})
 
             count = cursor.fetchone()[0]
 
             if count == 1:
                 post["BOOKMARKED"] = True
 
-    template_name = "likes.html"
+    template_name = "tweets.html"
     child_context = {"post_list": post_list,
                      "likes_is_active": True,
                      "profile_name": profilename}
@@ -374,7 +374,7 @@ def viewTweetMedia(request, profilename):
 
         profile_id = profile_id[0]
 
-        cursor.execute('''SELECT P.ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
+        cursor.execute('''SELECT P.ID POST_ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
                           FROM POST P JOIN ACCOUNT_POSTS_POST APP
                           ON(P.ID = APP.POST_ID)
                           JOIN ACCOUNT A
@@ -391,7 +391,7 @@ def viewTweetMedia(request, profilename):
         for post in post_list:
             cursor.execute('''SELECT COUNT(*) FROM ACCOUNT_LIKES_POST
                               WHERE ACCOUNT_ID=:user_id
-                              AND POST_ID=:post_id;''', {'user_id': user_id, 'post_id': post["ID"]})
+                              AND POST_ID=:post_id;''', {'user_id': user_id, 'post_id': post["POST_ID"]})
             count = cursor.fetchone()[0]
 
             if count == 1:
@@ -400,7 +400,7 @@ def viewTweetMedia(request, profilename):
             cursor.execute(f'''SELECT COUNT(*) 
                                FROM ACCOUNT_BOOKMARKS_POST 
                                WHERE ACCOUNT_ID=:user_id
-                               AND POST_ID=:postID;''', {'user_id': user_id, 'postID': post['ID']})
+                               AND POST_ID=:postID;''', {'user_id': user_id, 'postID': post['POST_ID']})
             count = cursor.fetchone()[0]
 
             if count == 1:
@@ -442,7 +442,7 @@ def viewTweetReply(request, profilename):
         profile_id = profile_id[0]
 
         # load tweets first
-        cursor.execute('''SELECT P.ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
+        cursor.execute('''SELECT P.ID POST_ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
                           FROM TWEET T JOIN POST P
                           ON(T.POST_ID = P.ID)
                           JOIN ACCOUNT_POSTS_POST APP
@@ -456,7 +456,7 @@ def viewTweetReply(request, profilename):
         post_list = dictfetchall(cursor)
 
         # load tweet comments
-        cursor.execute('''SELECT P.ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR,
+        cursor.execute('''SELECT P.ID POST_ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR,
                           (SELECT A2.ACCOUNTNAME
                           FROM TWEET T2 JOIN POST P2
                           ON(T2.POST_ID = P2.ID)
@@ -482,7 +482,7 @@ def viewTweetReply(request, profilename):
         post_list += comment_list
 
         # LOAD REPLIES TO COMMENTS
-        cursor.execute('''SELECT P.ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR,
+        cursor.execute('''SELECT P.ID POST_ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR,
                           (SELECT A2.ACCOUNTNAME
                           FROM TWEET_COMMENT TC2 JOIN TWEET_COMMENT PTC2
                           ON(TC2.PARENT_COMMENT_ID = PTC2.COMMENT_ID)
@@ -515,7 +515,7 @@ def viewTweetReply(request, profilename):
         for post in post_list:
             cursor.execute('''SELECT COUNT(*) FROM ACCOUNT_LIKES_POST
                               WHERE ACCOUNT_ID=:user_id
-                              AND POST_ID=:post_id;''', {'user_id': user_id, 'post_id': post["ID"]})
+                              AND POST_ID=:post_id;''', {'user_id': user_id, 'post_id': post["POST_ID"]})
             count = cursor.fetchone()[0]
 
             if count == 1:
@@ -524,7 +524,7 @@ def viewTweetReply(request, profilename):
             cursor.execute(f'''SELECT COUNT(*) 
                                FROM ACCOUNT_BOOKMARKS_POST 
                                WHERE ACCOUNT_ID=:user_id
-                               AND POST_ID=:postID;''', {'user_id': user_id, 'postID': post['ID']})
+                               AND POST_ID=:postID;''', {'user_id': user_id, 'postID': post['POST_ID']})
             count = cursor.fetchone()[0]
 
             if count == 1:
@@ -545,29 +545,6 @@ def viewTweetReply(request, profilename):
     print(context)
 
     return render(request, template_name, context)
-
-
-def fetchBookmarkedPosts(userID):
-    """
-    This will fetch all posts' info which were bookmarked by the given user id and return a dictionary of ID's
-    :param userID: a user id
-    :return: a list of dictionaries with key id, time, text, media, author's profile picture
-            which were bookmarked by the user
-    """
-    with connection.cursor() as cursor:
-        cursor.execute('''SELECT P.ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO
-                           FROM ACCOUNT_BOOKMARKS_POST ABP JOIN POST P
-                           ON(ABP.POST_ID = P.ID)
-                           JOIN ACCOUNT_POSTS_POST APP
-                           ON(P.ID = APP.POST_ID)
-                           JOIN ACCOUNT A
-                           ON(APP.ACCOUNT_ID = A.ID)
-                           WHERE ABP.ACCOUNT_ID = :userID;''', {'userID': userID})
-
-        row = cursor.fetchall()
-        print("Printing bookmarked post for user: " + userID)
-        print(row)
-        return row
 
 
 def follower(request, profilename):

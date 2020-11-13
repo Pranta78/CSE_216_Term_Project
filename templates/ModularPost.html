@@ -37,28 +37,29 @@
         <img class="card-img-bottom" src="{{ post.MEDIA }}" alt="Card image">
     {% endif %}
 
-    <form method="post">{% csrf_token %}
-
-        <input type="hidden" value={{ post.ID }} name="postID">
-        <input type="hidden" value={{ index }} name="indexID">
+    <div class="btn-toolbar">
+{#        <input type="hidden" value={{ post.POST_ID }} name="postID">#}
+{#        <input type="hidden" value={{ index }} name="indexID">#}
 
         <button class="btn"><i class="fa fa-retweet fa-lg"></i> Retweet</button>
 
         <a href= "{{ post.COMMENTLINK }}" class="btn" role="button"><i class="fa fa-comment-o"></i> Comment</a>
 {#        <a href= "/tweet/{{ post.ID }}#tweet-reply-box" class="btn" role="button"><i class="fa fa-comment-o"></i> Comment</a>#}
-
-        <button type="submit" class="btn" name="like" value="like"><i class="fa fa-heart{% if not post.LIKED %}-o{% endif %} fa-lg" {% if post.LIKED %}style="color: rgb(224,36,94);" {% endif %}></i>
-            {% if not post.LIKED %}
-                Like
-            {% endif %}
-        </button>
-        <button type="submit" class="btn" name="bookmark" value="bookmark"><i class="fa fa-bookmark{% if not post.BOOKMARKED %}-o{% endif %} fa-lg"></i>
-            {% if not post.BOOKMARKED %}
-                Bookmark
-            {% endif %}
-        </button>
-
-    </form>
+        <a class="like_btn" role="button" id="like_id{{post.POST_ID}}" data-post_id="{{ post.POST_ID }}" data-like_status="{% if post.LIKED %}like{% else %}unlike{% endif %}" style="text-decoration: none">
+            <button type="button" class="btn" name="like" data-post_id="{{ post.POST_ID }}" value="{% if post.LIKED %}like{% else %}unlike{% endif %}"><i class="fa fa-heart{% if not post.LIKED %}-o{% endif %} fa-lg" style="{% if post.LIKED %}color: rgb(224,36,94);{% endif %}" id="like_icon{{ post.POST_ID }}"></i>
+                {% if not post.LIKED %}
+                    Like
+                {% endif %}
+            </button>
+        </a>
+        <a class="bookmark_btn" role="button" id="bookmark_id{{post.POST_ID}}" data-post_id="{{ post.POST_ID }}" data-bookmark_status="{% if post.BOOKMARKED %}bookmark{% else %}unbookmark{% endif %}" style="text-decoration: none">
+            <button type="submit" class="btn" name="bookmark" value="bookmark" id="bookmark_btn"><i class="fa fa-bookmark{% if not post.BOOKMARKED %}-o{% endif %} fa-lg" id="bookmark_icon{{ post.POST_ID }}"></i>
+                {% if not post.BOOKMARKED %}
+                    Bookmark
+                {% endif %}
+            </button>
+        </a>
+    </div>
 </div>
     <br>
 {% endblock %}

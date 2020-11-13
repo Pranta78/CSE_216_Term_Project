@@ -209,7 +209,7 @@ def bookmark(request):
     username = request.session.get("username")
 
     with connection.cursor() as cursor:
-        cursor.execute('''SELECT P.ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
+        cursor.execute('''SELECT P.ID POST_ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
                            FROM ACCOUNT_BOOKMARKS_POST ALP JOIN POST P
                            ON(ALP.POST_ID = P.ID)
                            JOIN ACCOUNT_POSTS_POST APP
@@ -228,7 +228,7 @@ def bookmark(request):
             cursor.execute(f'''SELECT COUNT(*)
                                FROM ACCOUNT_LIKES_POST
                                WHERE ACCOUNT_ID = :user_id
-                               AND POST_ID = :postID;''', {'user_id': user_id, 'postID': post["ID"]})
+                               AND POST_ID = :postID;''', {'user_id': user_id, 'postID': post["POST_ID"]})
 
             count = cursor.fetchone()[0]
 
@@ -244,6 +244,62 @@ def bookmark(request):
     print(context)
 
     return render(request, template_name, context)
+
+
+@auth_or_redirect
+def like_bookmark_handler(request):
+
+    print("\tInside like_bookmark_handler!")
+
+    user_id = request.session.get("user_id")
+
+    from django.http import JsonResponse, HttpResponse
+
+    if request.GET:
+        like = request.GET.get("like", None)
+        bookmark = request.GET.get("bookmark", None)
+        post_id = request.GET.get("post_id", None)
+
+        print((like, bookmark, post_id))
+
+        data = {}
+
+        if like and post_id:
+            # got user input, now update the database
+            with connection.cursor() as cursor:
+                # if liked, then unlike, if not liked, then add to like list
+                if like == 'like':
+                    cursor.execute(f"DELETE FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={post_id};")
+                    connection.commit()
+                    data['like'] = 'unlike'
+
+                else:
+                    cursor.execute(f"INSERT INTO ACCOUNT_LIKES_POST VALUES({user_id}, {post_id});")
+                    connection.commit()
+                    data['like'] = 'like'
+
+            return JsonResponse(data)
+
+        elif bookmark and post_id:
+            # got user input, now update the database
+            with connection.cursor() as cursor:
+                # if bookmarked, then unbookmark, if not bookmarked, then add to bookmark list
+                if bookmark == 'bookmark':
+                    cursor.execute(f"DELETE FROM ACCOUNT_BOOKMARKS_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={post_id};")
+                    connection.commit()
+                    data['bookmark'] = 'unbookmark'
+
+                else:
+                    cursor.execute(f"INSERT INTO ACCOUNT_BOOKMARKS_POST VALUES({user_id}, {post_id});")
+                    connection.commit()
+                    data['bookmark'] = 'bookmark'
+
+            return JsonResponse(data)
+
+        else:
+            return HttpResponse("No like or bookmark was handled!")
+
+    return HttpResponse("Invalid URL!")
 
 
 def dictfetchall(cursor):

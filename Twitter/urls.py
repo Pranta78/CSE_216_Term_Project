@@ -18,7 +18,7 @@ from django.conf.urls import url
 from django.conf import settings
 from django.conf.urls.static import static
 from .views import (create_account, login, home_page,
-                    logout, skeleton, bookmark)
+                    logout, skeleton, bookmark, like_bookmark_handler)
 
 from .profile_view import (profile, profile_edit, user_profile, follower,
                            following, viewLikedPosts, viewPostedTweets,
@@ -54,6 +54,7 @@ urlpatterns = [
     url(r'^create/reply/comment/(?P<commentID>\w+)/$', create_reply_comment),
     url(r'^tweet/(?P<tweetID>\w+)/$', detailed_tweet_view, name='detailedTweetView'),
     url(r'^decotest/', deco_test),
+    url(r'^ajax/like_bookmark_handler/$', like_bookmark_handler, name='like_bookmark_handler')
 ]
 
 if settings.DEBUG:
