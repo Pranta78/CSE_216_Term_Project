@@ -30,6 +30,10 @@
                     <img src="{{ message.MEDIA }}" style="margin-right: 0px; max-width: 60%; height: auto">
                 {% endif %}
 
+                {% if message.SEEN %}
+                    <small class="text-muted" style="display: block"> seen at {{ message.SEEN }}</small>
+                {% endif %}
+
             {% endif %}
          </li>
         {% endfor %}
