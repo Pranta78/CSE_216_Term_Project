@@ -36,7 +36,8 @@ def create_reply_comment(request, commentID):
                     "AUTHORPHOTO": result[3],
                     "TEXT": result[4],
                     "MEDIA": result[5],
-                    "TIMESTAMP": result[6]
+                    "TIMESTAMP": result[6],
+                    "COMMENTLINK": "/create/reply/comment/%s" % commentID,
                 }  # your setup requires a separate tweet object
                 # would also be nice to set project rules for template context strings(i.e should they be full caps or not)
 
