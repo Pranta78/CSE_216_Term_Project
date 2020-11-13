@@ -79,10 +79,10 @@
 
             <div class="row" align="center" id="nav_content">
                 <div class="col-10">
-                   <nav class="nav nav nav-pills nav-fill">
+                   <nav class="nav nav nav-pills nav-justified">
                       <a class="nav-item nav-link {% if tweet_is_active %}active{% endif %}" href="{% url 'user_profile_tweets' profile_name %}">Tweets</a>
-                      <a class="nav-item nav-link {% if tweet_and_replies_is_active %}active{% endif %}" href="/profile/">Tweets and replies</a>
-                      <a class="nav-item nav-link {% if media_is_active %}active{% endif %}" href="/media/">Media</a>
+                      <a class="nav-item nav-link {% if tweet_and_replies_is_active %}active{% endif %}" href="{% url 'user_profile_tweets_and_replies' profile_name %}">Tweets and replies</a>
+                      <a class="nav-item nav-link {% if media_is_active %}active{% endif %}" href="{% url 'user_profile_media' profile_name %}">Media</a>
                       <a class="nav-item nav-link {% if likes_is_active %}active{% endif %}" href="{% url 'user_profile_likes' profile_name %}">Likes</a>
                    </nav>
                 </div>
@@ -93,7 +93,6 @@
             <div class="row">
                 <div class="container-fluid" id="content">
                     {% block profile_navcontent %}
-                        {% lorem 3 p %}
                     {% endblock %}
                 </div>
             </div>
@@ -102,15 +101,19 @@
     </div>
 
     <script>
-        if(document.getElementById("like"))
-            document.getElementsByTagName("body")[0].onload = function () {
-                document.getElementById("like").scrollIntoView(true);
+        document.getElementsByTagName("body")[0].onload = function () {
+                document.getElementById("nav_content").scrollIntoView(true);
             };
 
-        if(document.getElementById("tweet"))
-            document.getElementsByTagName("body")[0].onload = function () {
-                document.getElementById("tweet").scrollIntoView(true);
-            };
+        {#if(document.getElementById("like"))#}
+        {#    document.getElementsByTagName("body")[0].onload = function () {#}
+        {#        document.getElementById("like").scrollIntoView(true);#}
+        {#    };#}
+        {##}
+        {#if(document.getElementById("tweet"))#}
+        {#    document.getElementsByTagName("body")[0].onload = function () {#}
+        {#        document.getElementById("tweet").scrollIntoView(true);#}
+        {#    };#}
     </script>
 
  </div>

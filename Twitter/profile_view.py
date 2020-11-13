@@ -306,7 +306,7 @@ def viewPostedTweets(request, profilename):
 
         profile_id = profile_id[0]
 
-        cursor.execute('''SELECT P.ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
+        cursor.execute('''SELECT T.TWEET_ID ID, P.ID POST_ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
                           FROM TWEET T JOIN POST P
                           ON(T.POST_ID = P.ID)
                           JOIN ACCOUNT_POSTS_POST APP
@@ -315,7 +315,7 @@ def viewPostedTweets(request, profilename):
                           ON(APP.ACCOUNT_ID = A.ID)
                           WHERE APP.ACCOUNT_ID = :profile_id
                           AND IS_USER_AUDIENCE(:username, P.ID) = 1
-                          ORDER BY P.TIMESTAMP ASC;''', {'profile_id': profile_id, 'username': username})
+                          ORDER BY P.TIMESTAMP DESC;''', {'profile_id': profile_id, 'username': username})
 
         post_list = dictfetchall(cursor)
         print("Printing posted tweets for user: " + profilename)
@@ -324,7 +324,7 @@ def viewPostedTweets(request, profilename):
         for post in post_list:
             cursor.execute('''SELECT COUNT(*) FROM ACCOUNT_LIKES_POST
                               WHERE ACCOUNT_ID=:user_id
-                              AND POST_ID=:post_id;''', {'user_id': user_id, 'post_id': post["ID"]})
+                              AND POST_ID=:post_id;''', {'user_id': user_id, 'post_id': post["POST_ID"]})
             count = cursor.fetchone()[0]
 
             if count == 1:
@@ -333,7 +333,7 @@ def viewPostedTweets(request, profilename):
             cursor.execute(f'''SELECT COUNT(*) 
                                FROM ACCOUNT_BOOKMARKS_POST 
                                WHERE ACCOUNT_ID=:user_id
-                               AND POST_ID=:postID;''', {'user_id': user_id, 'postID': post['ID']})
+                               AND POST_ID=:postID;''', {'user_id': user_id, 'postID': post['POST_ID']})
             count = cursor.fetchone()[0]
 
             if count == 1:
@@ -357,8 +357,8 @@ def viewPostedTweets(request, profilename):
 
 
 @auth_or_redirect
-def viewPostedTweets(request, profilename):
-    # loads all tweets posted by the user
+def viewTweetMedia(request, profilename):
+    # loads all posts containing media posted by the user
     user_id = request.session.get("user_id")
     username = request.session.get("username")
 
@@ -375,18 +375,17 @@ def viewPostedTweets(request, profilename):
         profile_id = profile_id[0]
 
         cursor.execute('''SELECT P.ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
-                          FROM TWEET T JOIN POST P
-                          ON(T.POST_ID = P.ID)
-                          JOIN ACCOUNT_POSTS_POST APP
+                          FROM POST P JOIN ACCOUNT_POSTS_POST APP
                           ON(P.ID = APP.POST_ID)
                           JOIN ACCOUNT A
                           ON(APP.ACCOUNT_ID = A.ID)
                           WHERE APP.ACCOUNT_ID = :profile_id
+                          AND P.MEDIA IS NOT NULL
                           AND IS_USER_AUDIENCE(:username, P.ID) = 1
-                          ORDER BY P.TIMESTAMP ASC;''', {'profile_id': profile_id, 'username': username})
+                          ORDER BY P.TIMESTAMP DESC;''', {'profile_id': profile_id, 'username': username})
 
         post_list = dictfetchall(cursor)
-        print("Printing posted tweets for user: " + profilename)
+        print("Printing posted MEDIA posts for user: " + profilename)
         print(post_list)
 
         for post in post_list:
@@ -409,7 +408,7 @@ def viewPostedTweets(request, profilename):
 
     template_name = "tweets.html"
     child_context = {"post_list": post_list,
-                     "tweet_is_active": True,
+                     "media_is_active": True,
                      "profile_name": profilename}
 
     context = {**parent_context, **child_context}
@@ -418,7 +417,131 @@ def viewPostedTweets(request, profilename):
         context["follows_user"] = follow_handler(request.POST.get("follow"), username, profilename, user_id, profile_id)
         context["follower_count"], context["following_count"] = populateFollowInfo(profilename)
 
-    print("Printing overall context! ")
+    print("Printing overall context of media tab")
+    print(context)
+
+    return render(request, template_name, context)
+
+
+@auth_or_redirect
+def viewTweetReply(request, profilename):
+    # loads all posts(including tweets and comments) posted by the user
+    user_id = request.session.get("user_id")
+    username = request.session.get("username")
+
+    parent_context = populateProfile(profilename, username, user_id)
+
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT ID FROM ACCOUNT WHERE ACCOUNTNAME=:profilename;", {'profilename': profilename})
+
+        profile_id = cursor.fetchone()
+
+        if profile_id is None:
+            return HttpResponse("User not found!")
+
+        profile_id = profile_id[0]
+
+        # load tweets first
+        cursor.execute('''SELECT P.ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
+                          FROM TWEET T JOIN POST P
+                          ON(T.POST_ID = P.ID)
+                          JOIN ACCOUNT_POSTS_POST APP
+                          ON(P.ID = APP.POST_ID)
+                          JOIN ACCOUNT A
+                          ON(APP.ACCOUNT_ID = A.ID)
+                          WHERE APP.ACCOUNT_ID = :profile_id
+                          AND IS_USER_AUDIENCE(:username, P.ID) = 1
+                          ORDER BY P.TIMESTAMP DESC;''', {'profile_id': profile_id, 'username': username})
+
+        post_list = dictfetchall(cursor)
+
+        # load tweet comments
+        cursor.execute('''SELECT P.ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR,
+                          (SELECT A2.ACCOUNTNAME
+                          FROM TWEET T2 JOIN POST P2
+                          ON(T2.POST_ID = P2.ID)
+                          JOIN ACCOUNT_POSTS_POST APP2
+                          ON(P2.ID = APP2.POST_ID)
+                          JOIN ACCOUNT A2
+                          ON(A2.ID = APP2.ACCOUNT_ID)
+                          WHERE TC.TWEET_ID = T2.TWEET_ID
+                          ) "replied_to"
+                              FROM TWEET_COMMENT TC JOIN POST P
+                              ON(TC.POST_ID = P.ID)
+                              JOIN ACCOUNT_POSTS_POST APP
+                              ON(P.ID = APP.POST_ID)
+                              JOIN ACCOUNT A
+                              ON(APP.ACCOUNT_ID = A.ID)
+                              WHERE APP.ACCOUNT_ID = :profile_id
+                              AND PARENT_COMMENT_ID IS NULL
+                              AND IS_USER_AUDIENCE(:username, P.ID) = 1
+                              ORDER BY P.TIMESTAMP DESC;''',
+                       {'profile_id': profile_id, 'username': username})
+
+        comment_list = dictfetchall(cursor)
+        post_list += comment_list
+
+        # LOAD REPLIES TO COMMENTS
+        cursor.execute('''SELECT P.ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR,
+                          (SELECT A2.ACCOUNTNAME
+                          FROM TWEET_COMMENT TC2 JOIN TWEET_COMMENT PTC2
+                          ON(TC2.PARENT_COMMENT_ID = PTC2.COMMENT_ID)
+                          JOIN POST P2
+                          ON(PTC2.POST_ID = P2.ID)
+                          JOIN ACCOUNT_POSTS_POST APP2
+                          ON(P2.ID = APP2.POST_ID)
+                          JOIN ACCOUNT A2
+                          ON(A2.ID = APP2.ACCOUNT_ID)
+                          WHERE TC2.PARENT_COMMENT_ID = TC.PARENT_COMMENT_ID
+                          ) "replied_to"
+                              FROM TWEET_COMMENT TC JOIN POST P
+                              ON(TC.POST_ID = P.ID)
+                              JOIN ACCOUNT_POSTS_POST APP
+                              ON(P.ID = APP.POST_ID)
+                              JOIN ACCOUNT A
+                              ON(APP.ACCOUNT_ID = A.ID)
+                              WHERE APP.ACCOUNT_ID = :profile_id
+                              AND PARENT_COMMENT_ID IS NOT NULL
+                              AND IS_USER_AUDIENCE(:username, P.ID) = 1
+                              ORDER BY P.TIMESTAMP DESC;''',
+                              {'profile_id': profile_id, 'username': username})
+
+        reply_list = dictfetchall(cursor)
+        post_list += reply_list
+
+        print("Printing posted MEDIA posts for user: " + profilename)
+        print(post_list)
+
+        for post in post_list:
+            cursor.execute('''SELECT COUNT(*) FROM ACCOUNT_LIKES_POST
+                              WHERE ACCOUNT_ID=:user_id
+                              AND POST_ID=:post_id;''', {'user_id': user_id, 'post_id': post["ID"]})
+            count = cursor.fetchone()[0]
+
+            if count == 1:
+                post["LIKED"] = True
+
+            cursor.execute(f'''SELECT COUNT(*) 
+                               FROM ACCOUNT_BOOKMARKS_POST 
+                               WHERE ACCOUNT_ID=:user_id
+                               AND POST_ID=:postID;''', {'user_id': user_id, 'postID': post['ID']})
+            count = cursor.fetchone()[0]
+
+            if count == 1:
+                post["BOOKMARKED"] = True
+
+    template_name = "tweets.html"
+    child_context = {"post_list": post_list,
+                     "tweet_and_replies_is_active": True,
+                     "profile_name": profilename}
+
+    context = {**parent_context, **child_context}
+
+    if request.POST.get("follow", None):
+        context["follows_user"] = follow_handler(request.POST.get("follow"), username, profilename, user_id, profile_id)
+        context["follower_count"], context["following_count"] = populateFollowInfo(profilename)
+
+    print("Printing overall context of media tab")
     print(context)
 
     return render(request, template_name, context)
