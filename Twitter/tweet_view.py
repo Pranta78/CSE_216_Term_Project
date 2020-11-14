@@ -55,7 +55,7 @@ def save_post_media(media):
 def detailed_tweet_view(request, tweetID):
     print("TWEET %s" % tweetID)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT a.ACCOUNTNAME, a.PROFILE_PHOTO,  p.TEXT, p.MEDIA, p.TIMESTAMP "
+        cursor.execute("SELECT a.ACCOUNTNAME, a.PROFILE_PHOTO,  p.TEXT, p.MEDIA, p.TIMESTAMP, p.ID "
                        "FROM TWEET t JOIN POST p on(t.POST_ID = p.ID)"
                        "join ACCOUNT_POSTS_POST app on(t.POST_ID = app.POST_ID)"
                        "join ACCOUNT a on(a.ID = app.ACCOUNT_ID)WHERE t.TWEET_ID = %s", (tweetID,))
@@ -65,7 +65,7 @@ def detailed_tweet_view(request, tweetID):
 
         if result is not None:
             #TODO VIEWS to alleviate the suffering
-            cursor.execute( "SELECT a.id, a.ACCOUNTNAME, a.PROFILE_PHOTO, p.TEXT, p.MEDIA, p.TIMESTAMP, c.COMMENT_ID, c.PARENT_COMMENT_ID, pa.ACCOUNTNAME "
+            cursor.execute( "SELECT a.id, a.ACCOUNTNAME, a.PROFILE_PHOTO, p.TEXT, p.MEDIA, p.TIMESTAMP, p.ID, c.COMMENT_ID, c.PARENT_COMMENT_ID, pa.ACCOUNTNAME "
                             "FROM TWEET t "
                             "JOIN TWEET_COMMENT c on (t.TWEET_ID = c.TWEET_ID)"
                             "LEFT OUTER JOIN TWEET_COMMENT pc on (pc.COMMENT_ID = c.PARENT_COMMENT_ID)"
@@ -87,6 +87,7 @@ def detailed_tweet_view(request, tweetID):
                 "TEXT": result[2],
                 "MEDIA": result[3],
                 "TIMESTAMP": result[4],
+                "POST_ID": result[5],
                 "COMMENTLINK": "#tweet-reply-box",
             }#your setup requires a separate tweet object
             #would also be nice to set project rules for template context strings(i.e should they be full caps or not)

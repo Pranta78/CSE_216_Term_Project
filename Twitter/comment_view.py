@@ -19,7 +19,7 @@ def create_reply_tweet(request, tweetID):
 @auth_or_redirect
 def create_reply_comment(request, commentID):
     with connection.cursor() as cursor:
-        result = cursor.execute("SELECT t.TWEET_ID, a.id, a.ACCOUNTNAME, a.PROFILE_PHOTO, p.TEXT, p.MEDIA, p.TIMESTAMP "
+        result = cursor.execute("SELECT t.TWEET_ID, a.id, a.ACCOUNTNAME, a.PROFILE_PHOTO, p.TEXT, p.MEDIA, p.TIMESTAMP, p.ID "
                                          "FROM TWEET t "
                                          "JOIN TWEET_COMMENT c on (t.TWEET_ID = c.TWEET_ID)"
                                          "JOIN POST p on(c.POST_ID = p.ID)"
@@ -37,6 +37,7 @@ def create_reply_comment(request, commentID):
                     "TEXT": result[4],
                     "MEDIA": result[5],
                     "TIMESTAMP": result[6],
+                    "POST_ID": result[7],
                     "COMMENTLINK": "/create/reply/comment/%s" % commentID,
                 }  # your setup requires a separate tweet object
                 # would also be nice to set project rules for template context strings(i.e should they be full caps or not)
@@ -44,6 +45,7 @@ def create_reply_comment(request, commentID):
                 context = {
                     "comment": comment,
                     "COMMENTID": commentID,  # use for generating link for comment reply button
+                    "POST_ID":  result[7],
                     "USERLOGGEDIN": True,
                 }
                 return render(request, "CommentReplyView.html", context)
@@ -107,6 +109,7 @@ def __organizeCommentChains(comment_results):
             "TEXT": result_row[3],
             "MEDIA": result_row[4],
             "TIMESTAMP": result_row[5],
+            "POST_ID": result_row[7],
             "replied_to": result_row[8],
             "COMMENTLINK": "/create/reply/comment/%s" % comment_id,
         }
