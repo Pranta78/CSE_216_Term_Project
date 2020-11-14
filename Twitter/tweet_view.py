@@ -2,6 +2,7 @@ from django.http import HttpResponse
 from django.db import connection
 from django.shortcuts import render, redirect
 from django.urls import reverse
+from django.core.files.storage import FileSystemStorage
 
 from .auth import auth_or_redirect, is_user_authenticated
 
@@ -29,11 +30,10 @@ def create_tweet(request):
             else:
                 allowed_accounts = allowed_accounts.upper()
 
+            print(f"post, media {media.name}")
             if media:
-                from django.core.files.storage import FileSystemStorage
-                fs = FileSystemStorage()
-                media_name = fs.save(media.name, media)
-                media = fs.url(media_name)
+                media = save_post_media(media)
+                print(f"finally, media {media}")
 
             print((user_id, tweetBody, media, allowed_accounts))
 
@@ -44,6 +44,11 @@ def create_tweet(request):
                 return redirect(reverse('detailedTweetView', kwargs={"tweetID": result[4]}))
 
         return HttpResponse("something went wrong during tweet submission")
+
+def save_post_media(media):
+    fs = FileSystemStorage()
+    media_name = fs.save(media.name, media)
+    return fs.url(media_name)
 
 
 #no need for auth outside of ability to comment

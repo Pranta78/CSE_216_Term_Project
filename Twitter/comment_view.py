@@ -57,7 +57,7 @@ def create_comment(request, tweetID, parentCommentID):
         user_id = request.session['user_id']
         #TODO verify form data has correct user_id, commment_id
         commentBody = request.POST.get("CommentBody", None)
-        media = request.POST.get("Media", None)
+        media = request.FILES.get("Media", None)
 
         # To avoid getting a database error
         if commentBody or media:
@@ -68,11 +68,13 @@ def create_comment(request, tweetID, parentCommentID):
             else:
                 allowed_accounts = allowed_accounts.upper()
 
+            print(f"comment,  media {media}")
             if media:
                 from django.core.files.storage import FileSystemStorage
                 fs = FileSystemStorage()
                 media_name = fs.save(media.name, media)
                 media = fs.url(media_name)
+                print(f"finally, media {media}")
 
             print((user_id, tweetID, commentBody, media, allowed_accounts))
 
