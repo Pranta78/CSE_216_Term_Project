@@ -2,7 +2,7 @@
 <!--the modular post html should not concern itself with showing comments -->
 {% block skeleton_content %}
     <div class="row">
-        <div class="col-8">
+        <div class="col-8" id="tweet">
             {% include "ModularPost.html" with post=tweet %}
         </div>
     </div>
@@ -74,6 +74,114 @@
                 reader.readAsDataURL(this.files[0]);
             };
         </script>
+
+        {% block javascript %}
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    {% endblock %}
+
+    <script>
+        $('#tweet').on('click', '.like_btn', function (e){
+
+           let post_id = $(this).attr("data-post_id");
+           let like = $("#"+"like_id"+post_id).attr("data-like_status");
+           console.log("Like button was clicked!");
+
+           $.ajax({
+               type:'GET',
+               url :"{% url 'like_bookmark_handler' %}",
+               dataType: 'json',
+               data:{
+                   'like': like,
+                   'post_id': post_id
+               },
+               success: function(data) {
+                    console.log(data);
+                    //Update css
+                    if(data['like'] == 'like') {
+                        if ($("#"+"like_icon"+post_id)) {
+                            //$("#"+"like_icon"+post_id).className = "fa fa-heart fa-lg";
+                            $("#"+"like_icon"+post_id).attr("class", "fa fa-heart fa-lg");
+                            $("#"+"like_icon"+post_id).css("color", "rgb(224,36,94)");
+                            $("#"+"like_id"+post_id).attr("data-like_status", "like");
+                            console.log("Set value of like status to LIKE");
+                            //$("#"+"like_icon"+post_id).style.color = rgb(224,36,94);
+                        }
+                        else
+                            console.log("No like icon found!");
+                    }
+
+                    else if (data['like'] == 'unlike') {
+                        if ($("#"+"like_icon"+post_id)) {
+                            //$("#"+"like_icon"+post_id).className = "fa fa-heart-o fa-lg";
+                            $("#"+"like_icon"+post_id).attr("class", "fa fa-heart-o fa-lg");
+                            $("#"+"like_icon"+post_id).css("color", "rgb(0,0,0)");
+                            $("#"+"like_id"+post_id).attr("data-like_status", "unlike");
+                            console.log("Set value of like status to UNLIKE");
+                            //$("#like_icon").style.color = rgb(0,0,0);
+                        }
+                        else
+                            console.log("No like icon found!");
+                    }
+                    else
+                        alert("Invalid value for data of like key!");
+               },
+
+               error:function(exception){
+                   alert('Exeption:'+exception);
+               }
+        });
+               e.preventDefault();
+        });
+
+        $('#tweet').on('click', '.bookmark_btn', function (e){
+
+           let post_id = $(this).attr("data-post_id");
+           let bookmark = $("#"+"bookmark_id"+post_id).attr("data-bookmark_status");
+           console.log("Bookmark button was clicked!");
+
+           $.ajax({
+               type:'GET',
+               url :"{% url 'like_bookmark_handler' %}",
+               dataType: 'json',
+               data:{
+                   'bookmark': bookmark,
+                   'post_id': post_id
+               },
+               success: function(data) {
+                    console.log(data);
+                    //Update css
+                    if(data['bookmark'] == 'bookmark') {
+                        if ($("#"+"bookmark_icon"+post_id)) {
+                            //$("#"+"like_icon"+post_id).className = "fa fa-heart fa-lg";
+                            $("#"+"bookmark_icon"+post_id).attr("class", "fa fa-bookmark fa-lg");
+                            $("#"+"bookmark_id"+post_id).attr("data-bookmark_status", "bookmark");
+                            console.log("Set value of bookmark status to BOOKMARKED");
+                        }
+                        else
+                            console.log("No bookmark icon found!");
+                    }
+
+                    else if (data['bookmark'] == 'unbookmark') {
+                        if ($("#"+"bookmark_icon"+post_id)) {
+                            $("#"+"bookmark_icon"+post_id).attr("class", "fa fa-bookmark-o fa-lg");
+                            $("#"+"bookmark_id"+post_id).attr("data-bookmark_status", "unbookmark");
+                            console.log("Set value of bookmark status to UNBOOKMARK");
+                            //$("#like_icon").style.color = rgb(0,0,0);
+                        }
+                        else
+                            console.log("No bookmark icon found!");
+                    }
+                    else
+                        alert("Invalid value for data of bookmark key!");
+               },
+
+               error:function(exception){
+                   alert('Exeption:'+exception);
+               }
+        });
+               e.preventDefault();
+        });
+</script>
 
     {% endif %}
 

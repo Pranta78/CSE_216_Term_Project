@@ -322,6 +322,8 @@ def viewPostedTweets(request, profilename):
         print(post_list)
 
         for post in post_list:
+            post["COMMENTLINK"] = "/tweet/" + str(post["ID"]) + "/"
+
             cursor.execute('''SELECT COUNT(*) FROM ACCOUNT_LIKES_POST
                               WHERE ACCOUNT_ID=:user_id
                               AND POST_ID=:post_id;''', {'user_id': user_id, 'post_id': post["POST_ID"]})
