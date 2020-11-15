@@ -26,6 +26,7 @@ def create_reply_comment(request, commentID):
                                          "JOIN ACCOUNT_POSTS_POST app on(app.POST_ID = c.POST_ID)"
                                          "JOIN ACCOUNT a on (app.ACCOUNT_ID = a.ID)"
                                          "WHERE c.COMMENT_ID =  %s", [commentID]).fetchone()
+        print(f"commanet reply {result}")
 
         if result is not None:
             if request.POST:
@@ -89,6 +90,7 @@ def create_comment(request, tweetID, parentCommentID):
                     result = cursor.callproc("CREATE_COMMENT",
                                              [user_id, tweetID, parentCommentID, commentBody, media, allowed_accounts, newCommentID])
                 print(result[4])
+                connection.commit()
                 return redirect(reverse('detailedTweetView', kwargs={"tweetID": tweetID}))#TODO add comment chain focused view
 
             return HttpResponse("something went wrong during comment submission")
@@ -101,7 +103,7 @@ def __organizeCommentChains(comment_results):
     chain_dict = {}
     parent_dict ={}#temp disjoint set
     for result_row in comment_results:
-        comment_id = result_row[6]
+        comment_id = result_row[7]
 
         comment = {
             "AUTHOR": result_row[1],
@@ -109,12 +111,12 @@ def __organizeCommentChains(comment_results):
             "TEXT": result_row[3],
             "MEDIA": result_row[4],
             "TIMESTAMP": result_row[5],
-            "POST_ID": result_row[7],
+            "POST_ID": result_row[6],
             "replied_to": result_row[8],
             "COMMENTLINK": "/create/reply/comment/%s" % comment_id,
         }
 
-        parent_dict[comment_id] = result_row[7]
+        parent_dict[comment_id] = result_row[6]
         chain_root_id = __find_comment_parent_helper(comment_id, parent_dict)
         print(comment)
         if chain_root_id not in chain_dict:

@@ -1,0 +1,9 @@
+{% extends "skeleton.html" %}
+<!--the modular post html should not concern itself with showing comments -->
+{% block skeleton_content %}
+<div>
+    {% for n in NOTIFICATIONS %}
+        {% include "ModularNotificationCard.html" with notification=n %}
+    {% endfor %}
+</div>
+{% endblock %}

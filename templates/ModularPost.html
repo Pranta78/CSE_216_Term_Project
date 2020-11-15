@@ -29,7 +29,9 @@
         {% endif %}
 
         {% if post.TEXT %}
-            <p class="card-text" id="post_text_id{{ post.POST_ID }}">{{ post.TEXT }}</p>
+            <p class="card-text">
+                <pre style="font: inherit" id="post_text_id{{ post.POST_ID }}">{{ post.TEXT }}</pre>
+            </p>
         {% endif %}
     </div>
 

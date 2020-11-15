@@ -5,8 +5,9 @@
 {% block content %}
 <!-- end-->
 
-<div class="card" id="{{ postID }}">
-
-</div>
-    <br>
+<a class = "card {% if SEEN %}bg-primary {% else %} bg-white{% endif %}" href = {{ notification.NOTIFICATION_LINK }} >
+    <div class="card-body">
+        {{notification.NOTIFICATION_TEXT}}
+    </div>
+</a>
 {% endblock %}
