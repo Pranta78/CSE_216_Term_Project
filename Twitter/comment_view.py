@@ -34,7 +34,7 @@ def create_reply_comment(request, commentID):
             else:
                 comment = {
                     "AUTHOR": result[2],
-                    "AUTHORPHOTO": result[3],
+                    "PROFILE_PHOTO": result[3],
                     "TEXT": result[4],
                     "MEDIA": result[5],
                     "TIMESTAMP": result[6],
@@ -112,7 +112,7 @@ def __organizeCommentChains(comment_results):
             "MEDIA": result_row[4],
             "TIMESTAMP": result_row[5],
             "POST_ID": result_row[6],
-            "replied_to": result_row[8],
+            "replied_to": result_row[9],
             "COMMENTLINK": "/create/reply/comment/%s" % comment_id,
         }
 
