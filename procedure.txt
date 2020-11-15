@@ -415,3 +415,62 @@ SELECT
 (SELECT ACCOUNTNAME FROM ACCOUNT A WHERE A.ID=FN.FOLLOWED_ACCOUNT_ID) FOLLOWED
 FROM ACCOUNT_FOLLOWS_ACCOUNT AFA JOIN FOLLOW_NOTIFICATION FN
 ON (AFA.F_NOTIFICATION_ID = FN.FOLLOW_NOTIFICATION_ID);
+
+
+CREATE OR REPLACE TRIGGER PARSE_HASHTAG
+AFTER INSERT
+ON POST
+FOR EACH ROW
+DECLARE
+	STRING VARCHAR2(300);
+	N NUMBER;
+	REG VARCHAR2(30);
+	MATCH VARCHAR2(300);
+	CNT NUMBER;
+
+BEGIN
+	IF :NEW.TEXT IS NOT NULL THEN
+		STRING := :NEW.TEXT;
+		--oracle has many restrictions, like no look ahead lookup allowed
+		--so this simplest regex seemed feasible
+		REG := '#(\w+)';
+
+		--At first get the total number of matches
+		SELECT REGEXP_COUNT(STRING, REG) INTO N
+		FROM DUAL;
+
+		--The fourth parameter in REGEXP_SUBSTR indicates the number of occurrence
+		--to search for
+		--Iterate for every occurrence of regex match
+		FOR I IN 1..N
+		LOOP
+			--returns i-th match for given regexp
+			SELECT REGEXP_SUBSTR(STRING, REG, 1, I, NULL, 1) INTO MATCH
+			FROM DUAL;
+
+			--got i-th match
+			--now check whether this hashtag already exists
+			SELECT COUNT(*) INTO CNT
+			FROM HASHTAG
+			WHERE TEXT = MATCH;
+
+			--if it does not exist, insert it to the HASHTAG table
+			IF CNT = 0 THEN
+				INSERT INTO HASHTAG VALUES(MATCH);
+			END IF;
+
+			--in case any post contains same hashtag multiple times, insert them only once
+			--at most one distinct hashtag per post is allowed in the table
+			--otherwise primary key violation will occur
+			SELECT COUNT(*) INTO CNT
+			FROM POST_CONTAINS_HASHTAG
+			WHERE POST_ID = :NEW.ID
+			AND HASHTAG_TEXT = MATCH;
+
+			IF CNT = 0 THEN
+				INSERT INTO POST_CONTAINS_HASHTAG
+				VALUES(:NEW.ID, MATCH);
+			END IF;
+		END LOOP;
+	END IF;
+END;

@@ -25,6 +25,7 @@ from .profile_view import (profile, profile_edit, user_profile, follower,
                            viewTweetMedia, viewTweetReply)
 
 from .message_view import message, inbox
+from .trends_view import show_hashtag, trend
 
 from .tweet_view import detailed_tweet_view, create_tweet
 from .comment_view import create_reply_tweet, create_reply_comment
@@ -49,6 +50,8 @@ urlpatterns = [
     url(r'^user/(\w+)/media/$', viewTweetMedia, name='user_profile_media'),
     url(r'^user/(\w+)/likes/$', viewLikedPosts, name='user_profile_likes'),
     url(r'^inbox/(\w+)/$', inbox, name='user_inbox'),
+    url(r'^hashtag/(\w+)/$', show_hashtag, name='hashtag'),
+    url(r'^trends/$', trend),
     url(r'^create/tweet/', create_tweet),
     url(r'^create/reply/tweet/(?P<tweetID>\w+)/$', create_reply_tweet),
     url(r'^create/reply/comment/(?P<commentID>\w+)/$', create_reply_comment),

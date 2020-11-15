@@ -2,16 +2,27 @@
 
 {% block skeleton_content %}
     <h4>
-        Posts with hashtag #{{ hashtag }}
+        Posts containing hashtag <b style="color: rgb(29, 161, 242);">#{{ hashtag }}</b>
     </h4>
 
     <br>
 
     <div class="row" id="hashtag">
         <div class="col-8">
-            {% for post in post_list %}
-                {% include 'ModularPost.html' with post=post index=forloop.counter0%}
-            {% endfor %}
+            {% if post_list|length == 0 %}
+                <p>Nothing to display!</p>
+            {% else %}
+                {% for post in post_list|dictsortreversed:'TIMESTAMP' %}
+                    {% include 'ModularPost.html' with post=post index=forloop.counter0%}
+                {% endfor %}
+            {% endif %}
         </div>
     </div>
+
+    {% block javascript %}
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    {% endblock %}
+
+    {% include 'ajax_like_bookmark.html' with div_id="hashtag" only %}
+
 {% endblock %}

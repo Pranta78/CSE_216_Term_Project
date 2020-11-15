@@ -1,0 +1,28 @@
+{% extends 'skeleton.html' %}
+
+{% block skeleton_content %}
+
+<ul class="list-group">
+      <li class="list-group-item">
+        {% for hashtag in hashtag_list %}
+            <div class="card">
+              <div class="card-body">
+
+                <div class="card-title" style="display: inline">
+                    <a href="{% url 'hashtag' hashtag.TEXT %}">
+                        <h3 style="color: rgb(29, 161, 242);">
+                         #{{ hashtag.TEXT }}
+                        </h3>
+                    </a>
+                </div>
+
+                <div class="card-text">
+                    <h4>{{ hashtag.TOTAL }} posts</h4>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+      </li>
+</ul>
+
+{% endblock %}
