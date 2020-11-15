@@ -614,7 +614,7 @@ def follow_handler(action, username, profilename, user_id, profile_id):
             else:
                 print("ERROR FOLLOWING USER!")
                 print(data[2])
-
+        # alse need to delete from notifications and notification_notifies_account
         # Delete the corresponding follow entry
         elif action == "unfollow":
             cursor.execute('''DELETE FROM ACCOUNT_FOLLOWS_ACCOUNT

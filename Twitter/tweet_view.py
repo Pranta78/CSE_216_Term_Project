@@ -2,6 +2,7 @@ from django.http import HttpResponse
 from django.db import connection
 from django.shortcuts import render, redirect
 from django.urls import reverse
+from django.core.files.storage import FileSystemStorage
 
 from .auth import auth_or_redirect, is_user_authenticated
 
@@ -29,11 +30,10 @@ def create_tweet(request):
             else:
                 allowed_accounts = allowed_accounts.upper()
 
+            # print(f"post, media {media.name}")
             if media:
-                from django.core.files.storage import FileSystemStorage
-                fs = FileSystemStorage()
-                media_name = fs.save(media.name, media)
-                media = fs.url(media_name)
+                media = save_post_media(media)
+                # print(f"finally, media {media}")
 
             print((user_id, tweetBody, media, allowed_accounts))
 
@@ -45,12 +45,17 @@ def create_tweet(request):
 
         return HttpResponse("something went wrong during tweet submission")
 
+def save_post_media(media):
+    fs = FileSystemStorage()
+    media_name = fs.save(media.name, media)
+    return fs.url(media_name)
+
 
 #no need for auth outside of ability to comment
 def detailed_tweet_view(request, tweetID):
     print("TWEET %s" % tweetID)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT a.ACCOUNTNAME, a.PROFILE_PHOTO,  p.TEXT, p.MEDIA, p.TIMESTAMP "
+        cursor.execute("SELECT a.ACCOUNTNAME, a.PROFILE_PHOTO,  p.TEXT, p.MEDIA, p.TIMESTAMP, p.ID "
                        "FROM TWEET t JOIN POST p on(t.POST_ID = p.ID)"
                        "join ACCOUNT_POSTS_POST app on(t.POST_ID = app.POST_ID)"
                        "join ACCOUNT a on(a.ID = app.ACCOUNT_ID)WHERE t.TWEET_ID = %s", (tweetID,))
@@ -60,7 +65,7 @@ def detailed_tweet_view(request, tweetID):
 
         if result is not None:
             #TODO VIEWS to alleviate the suffering
-            cursor.execute( "SELECT a.id, a.ACCOUNTNAME, a.PROFILE_PHOTO, p.TEXT, p.MEDIA, p.TIMESTAMP, c.COMMENT_ID, c.PARENT_COMMENT_ID, pa.ACCOUNTNAME "
+            cursor.execute( "SELECT a.id, a.ACCOUNTNAME, a.PROFILE_PHOTO, p.TEXT, p.MEDIA, p.TIMESTAMP, p.ID, c.COMMENT_ID, c.PARENT_COMMENT_ID, pa.ACCOUNTNAME "
                             "FROM TWEET t "
                             "JOIN TWEET_COMMENT c on (t.TWEET_ID = c.TWEET_ID)"
                             "LEFT OUTER JOIN TWEET_COMMENT pc on (pc.COMMENT_ID = c.PARENT_COMMENT_ID)"
@@ -82,6 +87,7 @@ def detailed_tweet_view(request, tweetID):
                 "TEXT": result[2],
                 "MEDIA": result[3],
                 "TIMESTAMP": result[4],
+                "POST_ID": result[5],
                 "COMMENTLINK": "#tweet-reply-box",
             }#your setup requires a separate tweet object
             #would also be nice to set project rules for template context strings(i.e should they be full caps or not)
