@@ -30,10 +30,8 @@ def create_tweet(request):
             else:
                 allowed_accounts = allowed_accounts.upper()
 
-            # print(f"post, media {media.name}")
             if media:
                 media = save_post_media(media)
-                # print(f"finally, media {media}")
 
             print((user_id, tweetBody, media, allowed_accounts))
 
@@ -41,6 +39,7 @@ def create_tweet(request):
                 newTweetIdVar = 0
                 result = cursor.callproc("CREATE_TWEET", [user_id, tweetBody, media, allowed_accounts, newTweetIdVar])
                 print(result[4])
+                connection.commit()
                 return redirect(reverse('detailedTweetView', kwargs={"tweetID": result[4]}))
 
         return HttpResponse("something went wrong during tweet submission")

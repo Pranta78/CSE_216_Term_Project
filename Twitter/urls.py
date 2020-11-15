@@ -25,10 +25,10 @@ from .profile_view import (profile, profile_edit, user_profile, follower,
                            viewTweetMedia, viewTweetReply)
 
 from .message_view import message, inbox
-
 from .tweet_view import detailed_tweet_view, create_tweet
 from .comment_view import create_reply_tweet, create_reply_comment
 from .auth import deco_test
+from .notification_view import notifications_all_view
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
@@ -54,6 +54,7 @@ urlpatterns = [
     url(r'^create/reply/comment/(?P<commentID>\w+)/$', create_reply_comment),
     url(r'^tweet/(?P<tweetID>\w+)/$', detailed_tweet_view, name='detailedTweetView'),
     url(r'^decotest/', deco_test),
+    url(r'^notifications/', notifications_all_view),
     url(r'^ajax/like_bookmark_handler/$', like_bookmark_handler, name='like_bookmark_handler')
 ]
 
