@@ -2,6 +2,12 @@
 
 {% block skeleton_content %}
 
+<h3 style="color: white; background-color: rgb(29, 161, 242)">
+    Popular hashtags!
+</h3>
+
+<br>
+
 <ul class="list-group">
       <li class="list-group-item">
         {% for hashtag in hashtag_list %}
@@ -17,7 +23,7 @@
                 </div>
 
                 <div class="card-text">
-                    <h4>{{ hashtag.TOTAL }} posts</h4>
+                    <h4>{{ hashtag.TOTAL }} post{{ hashtag.TOTAL|pluralize }}</h4>
                 </div>
               </div>
             </div>

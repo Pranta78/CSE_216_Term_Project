@@ -13,7 +13,7 @@
             {% if post_list|length == 0 %}
                 <p>Nothing to display! Bookmark some posts first!</p>
             {% else %}
-                {% for post in post_list %}
+                {% for post in post_list|dictsortreversed:"TIMESTAMP" %}
                     {% include 'ModularPost.html' with post=post index=forloop.counter0%}
                 {% endfor %}
             {% endif %}
