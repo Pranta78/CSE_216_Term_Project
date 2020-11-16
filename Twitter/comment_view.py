@@ -99,7 +99,7 @@ def create_comment(request, tweetID, parentCommentID):
 
 
 def __organizeCommentChains(comment_results):
-    comment_chains = []#list of lists, first entry = root, anything after is a replay in that chain
+    comment_chains = []#list of lists, first entry = root, anything after is a reply in that chain
     chain_dict = {}
     parent_dict ={}#temp disjoint set
     for result_row in comment_results:

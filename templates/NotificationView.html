@@ -2,8 +2,12 @@
 <!--the modular post html should not concern itself with showing comments -->
 {% block skeleton_content %}
 <div>
-    {% for n in NOTIFICATIONS %}
-        {% include "ModularNotificationCard.html" with notification=n %}
-    {% endfor %}
+    {% if NOTIFICATIONS %}
+        {% for n in NOTIFICATIONS %}
+            {% include "ModularNotificationCard.html" with notification=n %}
+        {% endfor %}
+    {% else %}
+        No notifications to show.
+    {% endif %}
 </div>
 {% endblock %}

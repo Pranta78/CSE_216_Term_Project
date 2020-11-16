@@ -54,6 +54,8 @@ def save_post_media(media):
 def detailed_tweet_view(request, tweetID):
     print("TWEET %s" % tweetID)
     with connection.cursor() as cursor:
+        user_id = request.session.get("user_id")
+
         cursor.execute("SELECT a.ACCOUNTNAME, a.PROFILE_PHOTO,  p.TEXT, p.MEDIA, p.TIMESTAMP, p.ID "
                        "FROM TWEET t JOIN POST p on(t.POST_ID = p.ID)"
                        "join ACCOUNT_POSTS_POST app on(t.POST_ID = app.POST_ID)"
@@ -78,8 +80,22 @@ def detailed_tweet_view(request, tweetID):
             comment_results = cursor.fetchall()
             print(comment_results)
             comment_chains = __organizeCommentChains(comment_results)
+            for comment_chain in comment_chains:
+                for comment in comment_chain:
+                    cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={comment['POST_ID']};")
+                    count = cursor.fetchone()[0]
+
+                    if int(count) == 1:
+                        comment["LIKED"] = True
+
+                    cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_BOOKMARKS_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={result[5]};")
+                    count = cursor.fetchone()[0]
+
+                    if int(count) == 1:
+                        comment["BOOKMARKED"] = True
+
             comment_chains.reverse()
-            
+
             tweet = {
                 "AUTHOR": result[0],
                 "PROFILE_PHOTO": result[1],
@@ -91,12 +107,25 @@ def detailed_tweet_view(request, tweetID):
             }#your setup requires a separate tweet object
             #would also be nice to set project rules for template context strings(i.e should they be full caps or not)
 
+            cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={result[5]};")
+            count = cursor.fetchone()[0]
+
+            if int(count) == 1:
+                tweet["LIKED"] = True
+
+            cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_BOOKMARKS_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={result[5]};")
+            count = cursor.fetchone()[0]
+
+            if int(count) == 1:
+                tweet["BOOKMARKED"] = True
+
             context = {
                 "tweet": tweet,
                 "TWEETID": tweetID,#use for generating link for comment reply button
                 "USERLOGGEDIN": is_user_authenticated(request),
                 "COMMENTCHAINS": comment_chains,
             }
+
             print(context)
             return render(request, "DetailedTweetView.html", context)
 
