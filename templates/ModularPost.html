@@ -45,7 +45,7 @@
 
         <button class="btn"><i class="fa fa-retweet fa-lg"></i> Retweet</button>
 
-        <a href= "{{ post.COMMENTLINK }}" class="btn" role="button"><i class="fa fa-comment-o"></i> Comment</a>
+        <a href= "{{ post.COMMENTLINK }}" class="btn" role="button"><i class="fa fa-comment-o fa-lg"></i> Comment</a>
 {#        <a href= "/tweet/{{ post.ID }}#tweet-reply-box" class="btn" role="button"><i class="fa fa-comment-o"></i> Comment</a>#}
         <a class="like_btn" role="button" id="like_id{{post.POST_ID}}" data-post_id="{{ post.POST_ID }}" data-like_status="{% if post.LIKED %}like{% else %}unlike{% endif %}" style="text-decoration: none">
             <button type="button" class="btn" name="like" data-post_id="{{ post.POST_ID }}" value="{% if post.LIKED %}like{% else %}unlike{% endif %}"><i class="fa fa-heart{% if not post.LIKED %}-o{% endif %} fa-lg" style="{% if post.LIKED %}color: rgb(224,36,94);{% endif %}" id="like_icon{{ post.POST_ID }}"></i>
