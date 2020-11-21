@@ -329,7 +329,7 @@ def viewPostedTweets(request, profilename):
                               AND POST_ID=:post_id;''', {'user_id': user_id, 'post_id': post["POST_ID"]})
             count = cursor.fetchone()[0]
 
-            if count == 1:
+            if int(count) == 1:
                 post["LIKED"] = True
 
             cursor.execute(f'''SELECT COUNT(*) 
@@ -338,7 +338,7 @@ def viewPostedTweets(request, profilename):
                                AND POST_ID=:postID;''', {'user_id': user_id, 'postID': post['POST_ID']})
             count = cursor.fetchone()[0]
 
-            if count == 1:
+            if int(count) == 1:
                 post["BOOKMARKED"] = True
 
     template_name = "tweets.html"
@@ -396,7 +396,7 @@ def viewTweetMedia(request, profilename):
                               AND POST_ID=:post_id;''', {'user_id': user_id, 'post_id': post["POST_ID"]})
             count = cursor.fetchone()[0]
 
-            if count == 1:
+            if int(count) == 1:
                 post["LIKED"] = True
 
             cursor.execute(f'''SELECT COUNT(*) 
@@ -405,7 +405,7 @@ def viewTweetMedia(request, profilename):
                                AND POST_ID=:postID;''', {'user_id': user_id, 'postID': post['POST_ID']})
             count = cursor.fetchone()[0]
 
-            if count == 1:
+            if int(count) == 1:
                 post["BOOKMARKED"] = True
 
     template_name = "tweets.html"
@@ -520,7 +520,8 @@ def viewTweetReply(request, profilename):
                               AND POST_ID=:post_id;''', {'user_id': user_id, 'post_id': post["POST_ID"]})
             count = cursor.fetchone()[0]
 
-            if count == 1:
+            #FOR whatever reason count was a STRING. #BlameOracle
+            if int(count) > 0:
                 post["LIKED"] = True
 
             cursor.execute(f'''SELECT COUNT(*) 
@@ -529,8 +530,10 @@ def viewTweetReply(request, profilename):
                                AND POST_ID=:postID;''', {'user_id': user_id, 'postID': post['POST_ID']})
             count = cursor.fetchone()[0]
 
-            if count == 1:
+            if int(count) > 0:
                 post["BOOKMARKED"] = True
+
+            print(f"uid{user_id}, {post['POST_ID']} {post}")
 
     template_name = "tweets.html"
     child_context = {"post_list": post_list,
@@ -630,7 +633,6 @@ def follow_handler(action, username, profilename, user_id, profile_id):
 
         else:
             print("\tINVALID FOLLOW OR UNFOLLOW")
-
 
 def dictfetchall(cursor):
     """Return all rows from a cursor as a dict"""

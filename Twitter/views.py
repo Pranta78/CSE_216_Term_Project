@@ -113,13 +113,13 @@ def home_page(request):
                 cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={tweet['POST_ID']};")
                 count = cursor.fetchone()[0]
 
-                if count == 1:
+                if int(count) == 1:
                     tweet["LIKED"] = True
 
                 cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_BOOKMARKS_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={tweet['POST_ID']};")
                 count = cursor.fetchone()[0]
 
-                if count == 1:
+                if int(count) == 1:
                     tweet["BOOKMARKED"] = True
 
         print("Printing tweetlist: ")
@@ -175,7 +175,7 @@ def bookmark(request):
 
             count = cursor.fetchone()[0]
 
-            if count == 1:
+            if int(count) == 1:
                 post["LIKED"] = True
 
     template_name = "bookmark.html"
@@ -212,14 +212,24 @@ def like_bookmark_handler(request):
             with connection.cursor() as cursor:
                 # if liked, then unlike, if not liked, then add to like list
                 if like == 'like':
+                    #unlike the else branch, this can always be executed as deleting is safe
                     cursor.execute(f"DELETE FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={post_id};")
                     connection.commit()
                     data['like'] = 'unlike'
-
+                    print(f"newly unlike {data}")
                 else:
-                    cursor.execute(f"INSERT INTO ACCOUNT_LIKES_POST VALUES({user_id}, {post_id});")
-                    connection.commit()
+                    #It was still possible to mess with this by logging into the same account on two browsers
+                    #the state of the button is unreliable.
+                    #pull state from database, attempt to delete post, if one exists.
+                    cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={post_id};")
+                    count = cursor.fetchone()[0]
+
+                    if int(count) == 0:
+                        cursor.execute(f"INSERT INTO ACCOUNT_LIKES_POST VALUES({user_id}, {post_id});")
+                        connection.commit()
+
                     data['like'] = 'like'
+                    print(f"newly like {data}")
 
             return JsonResponse(data)
 
