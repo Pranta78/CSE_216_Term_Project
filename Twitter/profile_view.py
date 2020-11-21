@@ -501,73 +501,26 @@ def viewTweetReply(request, profilename):
 
         profile_id = profile_id[0]
 
-        # load tweets first
-        cursor.execute('''SELECT P.ID POST_ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
-                          FROM TWEET T JOIN POST P
-                          ON(T.POST_ID = P.ID)
-                          JOIN ACCOUNT_POSTS_POST APP
-                          ON(P.ID = APP.POST_ID)
-                          JOIN ACCOUNT A
-                          ON(APP.ACCOUNT_ID = A.ID)
-                          WHERE APP.ACCOUNT_ID = :profile_id
-                          AND IS_USER_AUDIENCE(:username, P.ID) = 1
-                          ORDER BY P.TIMESTAMP DESC;''', {'profile_id': profile_id, 'username': username})
+        cursor.execute('''SELECT TV.POST_ID, TIMESTAMP, TEXT, MEDIA, PROFILE_PHOTO, AUTHOR, COMMENTLINK
+                          FROM TWEET_VIEW TV
+                          WHERE ACCOUNT_ID = :profile_id
+                          AND IS_USER_AUDIENCE(:username, TV.POST_ID) = 1
+                          ORDER BY TV.TIMESTAMP DESC;''',
+                       {'profile_id': profile_id, 'username': username})
 
-        post_list = dictfetchall(cursor)
+        tweet_list = dictfetchall(cursor)
 
-        # load tweet comments
-        cursor.execute('''SELECT P.ID POST_ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR,
-                          (SELECT A2.ACCOUNTNAME
-                          FROM TWEET T2 JOIN POST P2
-                          ON(T2.POST_ID = P2.ID)
-                          JOIN ACCOUNT_POSTS_POST APP2
-                          ON(P2.ID = APP2.POST_ID)
-                          JOIN ACCOUNT A2
-                          ON(A2.ID = APP2.ACCOUNT_ID)
-                          WHERE TC.TWEET_ID = T2.TWEET_ID
-                          ) "replied_to"
-                              FROM TWEET_COMMENT TC JOIN POST P
-                              ON(TC.POST_ID = P.ID)
-                              JOIN ACCOUNT_POSTS_POST APP
-                              ON(P.ID = APP.POST_ID)
-                              JOIN ACCOUNT A
-                              ON(APP.ACCOUNT_ID = A.ID)
-                              WHERE APP.ACCOUNT_ID = :profile_id
-                              AND PARENT_COMMENT_ID IS NULL
-                              AND IS_USER_AUDIENCE(:username, P.ID) = 1
-                              ORDER BY P.TIMESTAMP DESC;''',
+        cursor.execute('''SELECT CV.POST_ID, TIMESTAMP, TEXT, MEDIA, PROFILE_PHOTO, AUTHOR,
+                          COMMENTLINK, PARENT_COMMENT_LINK, PARENT_TWEET_LINK, "replied_to"
+                          FROM COMMENT_VIEW CV
+                          WHERE ACCOUNT_ID = :profile_id
+                          AND IS_USER_AUDIENCE(:username, CV.POST_ID) = 1
+                          ORDER BY CV.TIMESTAMP DESC;''',
                        {'profile_id': profile_id, 'username': username})
 
         comment_list = dictfetchall(cursor)
-        post_list += comment_list
 
-        # LOAD REPLIES TO COMMENTS
-        cursor.execute('''SELECT P.ID POST_ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR,
-                          (SELECT A2.ACCOUNTNAME
-                          FROM TWEET_COMMENT TC2 JOIN TWEET_COMMENT PTC2
-                          ON(TC2.PARENT_COMMENT_ID = PTC2.COMMENT_ID)
-                          JOIN POST P2
-                          ON(PTC2.POST_ID = P2.ID)
-                          JOIN ACCOUNT_POSTS_POST APP2
-                          ON(P2.ID = APP2.POST_ID)
-                          JOIN ACCOUNT A2
-                          ON(A2.ID = APP2.ACCOUNT_ID)
-                          WHERE TC2.PARENT_COMMENT_ID = TC.PARENT_COMMENT_ID
-                          ) "replied_to"
-                              FROM TWEET_COMMENT TC JOIN POST P
-                              ON(TC.POST_ID = P.ID)
-                              JOIN ACCOUNT_POSTS_POST APP
-                              ON(P.ID = APP.POST_ID)
-                              JOIN ACCOUNT A
-                              ON(APP.ACCOUNT_ID = A.ID)
-                              WHERE APP.ACCOUNT_ID = :profile_id
-                              AND PARENT_COMMENT_ID IS NOT NULL
-                              AND IS_USER_AUDIENCE(:username, P.ID) = 1
-                              ORDER BY P.TIMESTAMP DESC;''',
-                              {'profile_id': profile_id, 'username': username})
-
-        reply_list = dictfetchall(cursor)
-        post_list += reply_list
+        post_list = tweet_list + comment_list
 
         print("Printing posted MEDIA posts for user: " + profilename)
         print(post_list)
@@ -578,7 +531,7 @@ def viewTweetReply(request, profilename):
                               AND POST_ID=:post_id;''', {'user_id': user_id, 'post_id': post["POST_ID"]})
             count = cursor.fetchone()[0]
 
-            #FOR whatever reason count was a STRING. #BlameOracle
+            # FOR whatever reason count was a STRING. #BlameOracle
             if int(count) > 0:
                 post["LIKED"] = True
 
