@@ -90,25 +90,32 @@ def home_page(request):
     tweetlist = None
 
     with connection.cursor() as cursor:
-        cursor.execute(f'''SELECT T.TWEET_ID ID, P.TEXT, P.MEDIA, P.TIMESTAMP, P.ID POST_ID,
-                    (SELECT ACCOUNTNAME FROM ACCOUNT A WHERE A.ID=APP.ACCOUNT_ID) AUTHOR,
-                    (SELECT PROFILE_PHOTO FROM ACCOUNT A WHERE A.ID=APP.ACCOUNT_ID) PROFILE_PHOTO
-                    FROM POST P JOIN TWEET T
-                    ON (P.ID = T.POST_ID)
-                    JOIN ACCOUNT_POSTS_POST	APP
-                    ON (T.POST_ID = APP.POST_ID)
-                    JOIN FOLLOW_NOTIFICATION FN
-                    ON (APP.ACCOUNT_ID = FN.FOLLOWED_ACCOUNT_ID)
-                    JOIN ACCOUNT_FOLLOWS_ACCOUNT AFA
-                    ON (FN.FOLLOW_NOTIFICATION_ID = AFA.F_NOTIFICATION_ID)
-                    WHERE AFA.ACCOUNT_ID = {user_id}
-                    ORDER BY P.TIMESTAMP DESC;''')
+        # cursor.execute(f'''SELECT T.TWEET_ID ID, P.TEXT, P.MEDIA, P.TIMESTAMP, P.ID POST_ID,
+        #             (SELECT ACCOUNTNAME FROM ACCOUNT A WHERE A.ID=APP.ACCOUNT_ID) AUTHOR,
+        #             (SELECT PROFILE_PHOTO FROM ACCOUNT A WHERE A.ID=APP.ACCOUNT_ID) PROFILE_PHOTO
+        #             FROM POST P JOIN TWEET T
+        #             ON (P.ID = T.POST_ID)
+        #             JOIN ACCOUNT_POSTS_POST	APP
+        #             ON (T.POST_ID = APP.POST_ID)
+        #             JOIN FOLLOW_NOTIFICATION FN
+        #             ON (APP.ACCOUNT_ID = FN.FOLLOWED_ACCOUNT_ID)
+        #             JOIN ACCOUNT_FOLLOWS_ACCOUNT AFA
+        #             ON (FN.FOLLOW_NOTIFICATION_ID = AFA.F_NOTIFICATION_ID)
+        #             WHERE AFA.ACCOUNT_ID = {user_id}
+        #             ORDER BY P.TIMESTAMP DESC;''')
+
+        cursor.execute(f'''SELECT TV.POST_ID, TIMESTAMP, TEXT, MEDIA, PROFILE_PHOTO, AUTHOR, COMMENTLINK
+                           FROM TWEET_VIEW TV
+                           JOIN FOLLOW_NOTIFICATION FN
+                           ON (TV.ACCOUNT_ID = FN.FOLLOWED_ACCOUNT_ID)
+                           JOIN ACCOUNT_FOLLOWS_ACCOUNT AFA
+                           ON (FN.FOLLOW_NOTIFICATION_ID = AFA.F_NOTIFICATION_ID)
+                           WHERE AFA.ACCOUNT_ID = :user_id
+                           ORDER BY TV.TIMESTAMP DESC;''', {'user_id': user_id})
 
         tweetlist = dictfetchall(cursor)
 
         for tweet in tweetlist:
-            tweet["COMMENTLINK"] = "/tweet/"+str(tweet["ID"])+"/"
-
             with connection.cursor() as cursor:
                 cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={tweet['POST_ID']};")
                 count = cursor.fetchone()[0]
