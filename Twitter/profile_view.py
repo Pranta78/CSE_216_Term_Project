@@ -259,16 +259,26 @@ def viewLikedPosts(request, profilename):
         print(post_list)
 
         for post in post_list:
-            post["LIKED"] = True
-
             cursor.execute(f'''SELECT COUNT(*)
-                               FROM ACCOUNT_BOOKMARKS_POST
-                               WHERE ACCOUNT_ID = :profile_id
-                               AND POST_ID = :postID;''', {'profile_id': profile_id, 'postID': post["POST_ID"]})
+                               FROM ACCOUNT_LIKES_POST
+                               WHERE ACCOUNT_ID = :user_id
+                               AND POST_ID = :postID;''',
+                           {'user_id': user_id, 'postID': post["POST_ID"]})
 
             count = cursor.fetchone()[0]
 
-            if count == 1:
+            if int(count) == 1:
+                post["LIKED"] = True
+
+            cursor.execute(f'''SELECT COUNT(*)
+                               FROM ACCOUNT_BOOKMARKS_POST
+                               WHERE ACCOUNT_ID = :user_id
+                               AND POST_ID = :postID;''',
+                           {'user_id': user_id, 'postID': post["POST_ID"]})
+
+            count = cursor.fetchone()[0]
+
+            if int(count) == 1:
                 post["BOOKMARKED"] = True
 
     template_name = "tweets.html"

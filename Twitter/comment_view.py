@@ -20,12 +20,12 @@ def create_reply_tweet(request, tweetID):
 def create_reply_comment(request, commentID):
     with connection.cursor() as cursor:
         result = cursor.execute("SELECT t.TWEET_ID, a.id, a.ACCOUNTNAME, a.PROFILE_PHOTO, p.TEXT, p.MEDIA, p.TIMESTAMP, p.ID "
-                                         "FROM TWEET t "
-                                         "JOIN TWEET_COMMENT c on (t.TWEET_ID = c.TWEET_ID)"
-                                         "JOIN POST p on(c.POST_ID = p.ID)"
-                                         "JOIN ACCOUNT_POSTS_POST app on(app.POST_ID = c.POST_ID)"
-                                         "JOIN ACCOUNT a on (app.ACCOUNT_ID = a.ID)"
-                                         "WHERE c.COMMENT_ID =  %s", [commentID]).fetchone()
+                                 "FROM TWEET t "
+                                 "JOIN TWEET_COMMENT c on (t.TWEET_ID = c.TWEET_ID)"
+                                 "JOIN POST p on(c.POST_ID = p.ID)"
+                                 "JOIN ACCOUNT_POSTS_POST app on(app.POST_ID = c.POST_ID)"
+                                 "JOIN ACCOUNT a on (app.ACCOUNT_ID = a.ID)"
+                                 "WHERE c.COMMENT_ID =  %s", [commentID]).fetchone()
         print(f"commanet reply {result}")
 
         if result is not None:
