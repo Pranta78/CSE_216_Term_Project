@@ -244,17 +244,38 @@ def viewLikedPosts(request, profilename):
         # IS_USER_AUDIENCE function is called to check whether the visitor (with username as user name)
         # has sufficient permission to see the post
 
-        cursor.execute('''SELECT P.ID POST_ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
-                           FROM ACCOUNT_LIKES_POST ALP JOIN POST P
-                           ON(ALP.POST_ID = P.ID)
-                           JOIN ACCOUNT_POSTS_POST APP
-                           ON(P.ID = APP.POST_ID)
-                           JOIN ACCOUNT A
-                           ON(APP.ACCOUNT_ID = A.ID)
-                           WHERE ALP.ACCOUNT_ID = :profile_id
-                           AND IS_USER_AUDIENCE(:username, P.ID) = 1;''', {'profile_id': profile_id, 'username': username})
+        # cursor.execute('''SELECT P.ID POST_ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
+        #                    FROM ACCOUNT_LIKES_POST ALP JOIN POST P
+        #                    ON(ALP.POST_ID = P.ID)
+        #                    JOIN ACCOUNT_POSTS_POST APP
+        #                    ON(P.ID = APP.POST_ID)
+        #                    JOIN ACCOUNT A
+        #                    ON(APP.ACCOUNT_ID = A.ID)
+        #                    WHERE ALP.ACCOUNT_ID = :profile_id
+        #                    AND IS_USER_AUDIENCE(:username, P.ID) = 1;''', {'profile_id': profile_id, 'username': username})
 
-        post_list = dictfetchall(cursor)
+        cursor.execute('''SELECT TV.POST_ID, TIMESTAMP, TEXT, MEDIA, PROFILE_PHOTO, AUTHOR,
+                          COMMENTLINK
+                          FROM ACCOUNT_LIKES_POST ALP JOIN TWEET_VIEW TV
+                          ON(ALP.POST_ID = TV.POST_ID)
+                          WHERE ALP.ACCOUNT_ID = :profile_id
+                          AND IS_USER_AUDIENCE(:username, TV.POST_ID) = 1;''',
+                       {'profile_id': profile_id, 'username': username})
+
+        tweet_list = dictfetchall(cursor)
+
+        cursor.execute('''SELECT CV.POST_ID, TIMESTAMP, TEXT, MEDIA, PROFILE_PHOTO, AUTHOR,
+                          COMMENTLINK, PARENT_COMMENT_LINK, PARENT_TWEET_LINK, "replied_to"
+                          FROM ACCOUNT_LIKES_POST ALP JOIN COMMENT_VIEW CV
+                          ON(ALP.POST_ID = CV.POST_ID)
+                          WHERE ALP.ACCOUNT_ID = :profile_id
+                          AND IS_USER_AUDIENCE(:username, CV.POST_ID) = 1;''',
+                       {'profile_id': profile_id, 'username': username})
+
+        comment_list = dictfetchall(cursor)
+
+        post_list = tweet_list + comment_list
+
         print("Printing liked post for user: " + profilename)
         print(post_list)
 
@@ -316,24 +337,29 @@ def viewPostedTweets(request, profilename):
 
         profile_id = profile_id[0]
 
-        cursor.execute('''SELECT T.TWEET_ID ID, P.ID POST_ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
-                          FROM TWEET T JOIN POST P
-                          ON(T.POST_ID = P.ID)
-                          JOIN ACCOUNT_POSTS_POST APP
-                          ON(P.ID = APP.POST_ID)
-                          JOIN ACCOUNT A
-                          ON(APP.ACCOUNT_ID = A.ID)
-                          WHERE APP.ACCOUNT_ID = :profile_id
-                          AND IS_USER_AUDIENCE(:username, P.ID) = 1
-                          ORDER BY P.TIMESTAMP DESC;''', {'profile_id': profile_id, 'username': username})
+        # cursor.execute('''SELECT T.TWEET_ID ID, P.ID POST_ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
+        #                   FROM TWEET T JOIN POST P
+        #                   ON(T.POST_ID = P.ID)
+        #                   JOIN ACCOUNT_POSTS_POST APP
+        #                   ON(P.ID = APP.POST_ID)
+        #                   JOIN ACCOUNT A
+        #                   ON(APP.ACCOUNT_ID = A.ID)
+        #                   WHERE APP.ACCOUNT_ID = :profile_id
+        #                   AND IS_USER_AUDIENCE(:username, P.ID) = 1
+        #                   ORDER BY P.TIMESTAMP DESC;''', {'profile_id': profile_id, 'username': username})
+
+        cursor.execute('''SELECT TV.POST_ID, TIMESTAMP, TEXT, MEDIA, PROFILE_PHOTO, AUTHOR, COMMENTLINK
+                          FROM TWEET_VIEW TV
+                          WHERE ACCOUNT_ID = :profile_id
+                          AND IS_USER_AUDIENCE(:username, TV.POST_ID) = 1
+                          ORDER BY TV.TIMESTAMP DESC;''',
+                       {'profile_id': profile_id, 'username': username})
 
         post_list = dictfetchall(cursor)
         print("Printing posted tweets for user: " + profilename)
         print(post_list)
 
         for post in post_list:
-            post["COMMENTLINK"] = "/tweet/" + str(post["ID"]) + "/"
-
             cursor.execute('''SELECT COUNT(*) FROM ACCOUNT_LIKES_POST
                               WHERE ACCOUNT_ID=:user_id
                               AND POST_ID=:post_id;''', {'user_id': user_id, 'post_id': post["POST_ID"]})
@@ -386,17 +412,39 @@ def viewTweetMedia(request, profilename):
 
         profile_id = profile_id[0]
 
-        cursor.execute('''SELECT P.ID POST_ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
-                          FROM POST P JOIN ACCOUNT_POSTS_POST APP
-                          ON(P.ID = APP.POST_ID)
-                          JOIN ACCOUNT A
-                          ON(APP.ACCOUNT_ID = A.ID)
-                          WHERE APP.ACCOUNT_ID = :profile_id
-                          AND P.MEDIA IS NOT NULL
-                          AND IS_USER_AUDIENCE(:username, P.ID) = 1
-                          ORDER BY P.TIMESTAMP DESC;''', {'profile_id': profile_id, 'username': username})
+        # cursor.execute('''SELECT P.ID POST_ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
+        #                   FROM POST P JOIN ACCOUNT_POSTS_POST APP
+        #                   ON(P.ID = APP.POST_ID)
+        #                   JOIN ACCOUNT A
+        #                   ON(APP.ACCOUNT_ID = A.ID)
+        #                   WHERE APP.ACCOUNT_ID = :profile_id
+        #                   AND P.MEDIA IS NOT NULL
+        #                   AND IS_USER_AUDIENCE(:username, P.ID) = 1
+        #                   ORDER BY P.TIMESTAMP DESC;''', {'profile_id': profile_id, 'username': username})
 
-        post_list = dictfetchall(cursor)
+        cursor.execute('''SELECT TV.POST_ID, TIMESTAMP, TEXT, MEDIA, PROFILE_PHOTO, AUTHOR, COMMENTLINK
+                          FROM TWEET_VIEW TV
+                          WHERE ACCOUNT_ID = :profile_id
+                          AND TV.MEDIA IS NOT NULL
+                          AND IS_USER_AUDIENCE(:username, TV.POST_ID) = 1
+                          ORDER BY TV.TIMESTAMP DESC;''',
+                       {'profile_id': profile_id, 'username': username})
+
+        tweet_list = dictfetchall(cursor)
+
+        cursor.execute('''SELECT CV.POST_ID, TIMESTAMP, TEXT, MEDIA, PROFILE_PHOTO, AUTHOR,
+                          COMMENTLINK, PARENT_COMMENT_LINK, PARENT_TWEET_LINK, "replied_to"
+                          FROM COMMENT_VIEW CV
+                          WHERE ACCOUNT_ID = :profile_id
+                          AND CV.MEDIA IS NOT NULL
+                          AND IS_USER_AUDIENCE(:username, CV.POST_ID) = 1
+                          ORDER BY CV.TIMESTAMP DESC;''',
+                       {'profile_id': profile_id, 'username': username})
+
+        comment_list = dictfetchall(cursor)
+
+        post_list = tweet_list + comment_list
+
         print("Printing posted MEDIA posts for user: " + profilename)
         print(post_list)
 

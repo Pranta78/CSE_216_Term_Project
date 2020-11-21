@@ -21,7 +21,7 @@
         <p class="card-text"><small class="text-muted">{{ post.TIMESTAMP }}</small></p>
 
         {% if post.replied_to %}
-            <h6 class="card-subtitle mb-2 text-muted">Replying to
+            <h6 class="card-subtitle mb-2 text-muted">Replied to
                 <a href="{% url 'user_profile' post.replied_to %}">
                     @{{ post.replied_to }}
                 </a>
@@ -33,11 +33,20 @@
                 <pre style="font: inherit" id="post_text_id{{ post.POST_ID }}">{{ post.TEXT }}</pre>
             </p>
         {% endif %}
-    </div>
 
     {% if post.MEDIA %}
         <img class="card-img-bottom" src="{{ post.MEDIA }}" alt="Card image">
     {% endif %}
+
+    {% if post.PARENT_TWEET_LINK %}
+        <a href="{{ post.PARENT_TWEET_LINK }}" class="card-link">See parent tweet</a>
+    {% endif %}
+
+    {% if post.PARENT_COMMENT_LINK %}
+        <a href="{{ post.PARENT_COMMENT_LINK }}" class="card-link">See parent comment</a>
+    {% endif %}
+
+    </div>
 
     <div class="btn-toolbar">
 {#        <input type="hidden" value={{ post.POST_ID }} name="postID">#}

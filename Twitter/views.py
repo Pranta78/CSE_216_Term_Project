@@ -152,16 +152,35 @@ def bookmark(request):
     username = request.session.get("username")
 
     with connection.cursor() as cursor:
-        cursor.execute('''SELECT P.ID POST_ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
-                           FROM ACCOUNT_BOOKMARKS_POST ALP JOIN POST P
-                           ON(ALP.POST_ID = P.ID)
-                           JOIN ACCOUNT_POSTS_POST APP
-                           ON(P.ID = APP.POST_ID)
-                           JOIN ACCOUNT A
-                           ON(APP.ACCOUNT_ID = A.ID)
-                           WHERE ALP.ACCOUNT_ID = :user_id;''', {'user_id': user_id})
+        # cursor.execute('''SELECT P.ID POST_ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
+        #                    FROM ACCOUNT_BOOKMARKS_POST ALP JOIN POST P
+        #                    ON(ALP.POST_ID = P.ID)
+        #                    JOIN ACCOUNT_POSTS_POST APP
+        #                    ON(P.ID = APP.POST_ID)
+        #                    JOIN ACCOUNT A
+        #                    ON(APP.ACCOUNT_ID = A.ID)
+        #                    WHERE ALP.ACCOUNT_ID = :user_id;''', {'user_id': user_id})
 
-        post_list = dictfetchall(cursor)
+        cursor.execute('''SELECT TV.POST_ID, TIMESTAMP, TEXT, MEDIA, PROFILE_PHOTO, AUTHOR,
+                          COMMENTLINK
+                          FROM ACCOUNT_BOOKMARKS_POST ALP JOIN TWEET_VIEW TV
+                          ON(ALP.POST_ID = TV.POST_ID)
+                          WHERE ALP.ACCOUNT_ID = :user_id;''',
+                       {'user_id': user_id})
+
+        tweet_list = dictfetchall(cursor)
+
+        cursor.execute('''SELECT CV.POST_ID, TIMESTAMP, TEXT, MEDIA, PROFILE_PHOTO, AUTHOR,
+                          COMMENTLINK, PARENT_COMMENT_LINK, PARENT_TWEET_LINK, "replied_to"
+                          FROM ACCOUNT_BOOKMARKS_POST ALP JOIN COMMENT_VIEW CV
+                          ON(ALP.POST_ID = CV.POST_ID)
+                          WHERE ALP.ACCOUNT_ID = :user_id;''',
+                       {'user_id': user_id})
+
+        comment_list = dictfetchall(cursor)
+
+        post_list = tweet_list + comment_list
+
         print("Printing bookmarked post for user: " + username)
         print(post_list)
 
