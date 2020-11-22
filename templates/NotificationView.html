@@ -1,13 +1,57 @@
 {% extends "skeleton.html" %}
-<!--the modular post html should not concern itself with showing comments -->
+
 {% block skeleton_content %}
-<div>
-    {% if NOTIFICATIONS %}
-        {% for n in NOTIFICATIONS %}
-            {% include "ModularNotificationCard.html" with notification=n %}
-        {% endfor %}
-    {% else %}
-        No notifications to show.
-    {% endif %}
-</div>
+
+{#<div class="container-fluid" style="display: block; position: relative">#}
+<div class="container-fluid">
+    <div class="row">
+        <div class="container-fluid">
+{#                {% include 'profile_navigator.html' with profile_name=profile_name %}#}
+
+            <div class="row" align="center" id="nav_content">
+                <div class="col-10">
+                   <nav class="nav nav nav-pills nav-justified">
+                      <a class="nav-item nav-link {% if all_notifs_active %}active{% endif %}" href="{% url 'all_notifications'  %}">All Notifications</a>
+                      <a class="nav-item nav-link {% if mentions_active %}active{% endif %}" href="{% url 'all_mention_notifications'  %}">Mentions</a>
+                   </nav>
+                </div>
+            </div>
+
+            <br>
+
+            <div class="row">
+                <div class="container-fluid" id="content">
+                    <div>
+                        {% if NOTIFICATIONS %}
+                            {% for n in NOTIFICATIONS %}
+                                {% include "ModularNotificationCard.html" with notification=n %}
+                            {% endfor %}
+                        {% else %}
+                            No notifications to show.
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        document.getElementsByTagName("body")[0].onload = function () {
+                document.getElementById("nav_content").scrollIntoView(true);
+            };
+
+        {#if(document.getElementById("like"))#}
+        {#    document.getElementsByTagName("body")[0].onload = function () {#}
+        {#        document.getElementById("like").scrollIntoView(true);#}
+        {#    };#}
+        {##}
+        {#if(document.getElementById("tweet"))#}
+        {#    document.getElementsByTagName("body")[0].onload = function () {#}
+        {#        document.getElementById("tweet").scrollIntoView(true);#}
+        {#    };#}
+    </script>
+
+ </div>
+
 {% endblock %}

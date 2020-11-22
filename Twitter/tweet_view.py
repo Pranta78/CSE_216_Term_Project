@@ -3,15 +3,8 @@ from django.db import connection
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.core.files.storage import FileSystemStorage
-
 from .auth import auth_or_redirect, is_user_authenticated
-
-#Working on the same view.py file together is a recipe for merge conflicts
-#I have separated the tweet part into a different py file.
-#Ideally, this should be a separate app but this is sufficient for now
-#It'd be best if you separate your stuff as well
 from .comment_view import __organizeCommentChains
-
 
 @auth_or_redirect
 def create_tweet(request):
