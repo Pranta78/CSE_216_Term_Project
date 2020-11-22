@@ -66,6 +66,42 @@ def create_reply_comment(request, commentID):
                     "POST_ID":  result[7],
                     "USERLOGGEDIN": True,
                 }
+
+                cursor.execute('''SELECT 
+                                        AUTHOR, PROFILE_PHOTO,  TEXT, MEDIA, TIMESTAMP, POST_ID, COMMENT_ID, "replied_to"
+                                    FROM
+                                        COMMENT_VIEW 
+                                    WHERE
+                                        PARENT_COMMENT_ID = %s
+                                    ORDER BY TIMESTAMP ASC''', [commentID]);
+                comment_reply_result = cursor.fetchall()
+                replies = []
+                for reply_result in comment_reply_result:
+                    reply = {
+                        "AUTHOR": reply_result[0],
+                        "PROFILE_PHOTO": reply_result[1],
+                        "TEXT": reply_result[2],
+                        "MEDIA": reply_result[3],
+                        "TIMESTAMP": reply_result[4],
+                        "POST_ID": reply_result[5],
+                        "replied_to": reply_result[7],
+                        "COMMENTLINK": "/create/reply/comment/%s" % reply_result[6],
+                    }
+
+                    cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={reply['POST_ID']};")
+                    count = cursor.fetchone()[0]
+
+                    if int(count) == 1:
+                        reply["LIKED"] = True
+
+                    cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_BOOKMARKS_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={reply['POST_ID']};")
+                    count = cursor.fetchone()[0]
+
+                    if int(count) == 1:
+                        reply["BOOKMARKED"] = True
+
+                    replies.append(reply)
+                context['replies'] = replies
                 return render(request, "CommentReplyView.html", context)
         return HttpResponse("invalid parent comment id for comment")
     return HttpResponse("invalid GET request on POST URL")
