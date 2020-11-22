@@ -88,7 +88,7 @@ def home_page(request):
 
     # All tweets from all people the user follows will be shown in reverse chronological order
     tweetlist = None
-
+    notification_count = 0;
     with connection.cursor() as cursor:
         # cursor.execute(f'''SELECT T.TWEET_ID ID, P.TEXT, P.MEDIA, P.TIMESTAMP, P.ID POST_ID,
         #             (SELECT ACCOUNTNAME FROM ACCOUNT A WHERE A.ID=APP.ACCOUNT_ID) AUTHOR,
@@ -115,6 +115,8 @@ def home_page(request):
 
         tweetlist = dictfetchall(cursor)
 
+        notification_count = cursor.callfunc("get_unseen_notif_count", int, [user_id])
+
         for tweet in tweetlist:
             with connection.cursor() as cursor:
                 cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={tweet['POST_ID']};")
@@ -135,6 +137,7 @@ def home_page(request):
     context = {"user_id": user_id,
                "username": username,
                "tweet_list": tweetlist,
+               "notification_count": notification_count,
                "home_is_active": True}
 
     template_name = "home.html"

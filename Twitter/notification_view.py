@@ -55,8 +55,12 @@ def notifications_all_view(request):
                     cursor.execute("UPDATE NOTIFICATION_NOTIFIES_ACCOUNT "
                                     "set SEEN = sysdate "
                                     "WHERE NOTIFICATION_ID = %s ", [result_row[0]])
+
+                notification_count = cursor.callfunc("get_unseen_notif_count", int, [user_id])
+
                 context = {
-                    "NOTIFICATIONS": notifications
+                    "notification_count": notification_count,
+                    "NOTIFICATIONS": notifications,
                 }
                 return render(request, "NotificationView.html", context)
 

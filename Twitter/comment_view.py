@@ -18,6 +18,7 @@ def create_reply_tweet(request, tweetID):
 
 @auth_or_redirect
 def create_reply_comment(request, commentID):
+    user_id = request.session.get("user_id", None)
     with connection.cursor() as cursor:
         result = cursor.execute("SELECT t.TWEET_ID, a.id, a.ACCOUNTNAME, a.PROFILE_PHOTO, p.TEXT, p.MEDIA, p.TIMESTAMP, p.ID "
                                  "FROM TWEET t "
@@ -32,6 +33,7 @@ def create_reply_comment(request, commentID):
             if request.POST:
                 return create_comment(request,result[0], commentID)
             else:
+
                 comment = {
                     "AUTHOR": result[2],
                     "PROFILE_PHOTO": result[3],
@@ -43,7 +45,22 @@ def create_reply_comment(request, commentID):
                 }  # your setup requires a separate tweet object
                 # would also be nice to set project rules for template context strings(i.e should they be full caps or not)
 
+                notification_count = cursor.callfunc("get_unseen_notif_count", int, [user_id])
+
+                cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={comment['POST_ID']};")
+                count = cursor.fetchone()[0]
+
+                if int(count) == 1:
+                    comment["LIKED"] = True
+
+                cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_BOOKMARKS_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={comment['POST_ID']};")
+                count = cursor.fetchone()[0]
+
+                if int(count) == 1:
+                    comment["BOOKMARKED"] = True
+
                 context = {
+                    "notification_count": notification_count,
                     "comment": comment,
                     "COMMENTID": commentID,  # use for generating link for comment reply button
                     "POST_ID":  result[7],
