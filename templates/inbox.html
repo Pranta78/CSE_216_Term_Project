@@ -1,10 +1,12 @@
 {% extends "skeleton.html" %}
 
 {% block skeleton_content %}
-    <h1>{{ receiver }}</h1>
+    <h3 style="color: white; background-color: rgb(29, 161, 242); position: sticky; top: 0; z-index: 1">
+        {{ receiver }}
+    </h3>
 
 <div class="container-fluid">
-    <ul class="list-group">
+    <ul class="list-group" style="overflow-y: auto; display: block">
         {% for message in messagelist %}
             <li class="list-group-item" style="text-align: {% if message.NAME == username %}right{% else %}left{% endif %}">
 
@@ -46,7 +48,7 @@
 <br>
 
 {#<div style="position: sticky; bottom: 0;">#}
-<div id="chatBox">
+<div id="chatBox" style="position: sticky; bottom: 0; background-color: white">
     <form method="POST" enctype="multipart/form-data">{% csrf_token %}
         <div class="form-group">
             <div class="row">
