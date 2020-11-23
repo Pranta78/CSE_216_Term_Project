@@ -53,7 +53,7 @@
         <div class="form-group">
             <div class="md-form amber-textarea active-amber-textarea">
               <label style="float: left; color: darkred; font-weight: bold">Write a bio!</label>
-              <label style="float: right" id="counter">280 characters left</label>
+              <label style="float: right" id="counter"></label>
               <textarea class="md-textarea form-control" rows="3" name="bio" id="bio" maxlength="280" placeholder="Write your bio!">{% if bio %}{{ bio }}{% endif %}</textarea>
             </div>
         </div>
@@ -100,7 +100,7 @@
             let counter = document.getElementById("counter");
 
             counter.textContent = (280-bio.textLength) + " characters left";
-        }
+        };
 
         document.getElementById("profile_photo").onchange = function () {
             let reader = new FileReader();
