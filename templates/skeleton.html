@@ -16,7 +16,10 @@
           <a class="nav-item nav-link {% if home_is_active %}active{% endif %}" href="/home/">Home</a>
           <a class="nav-item nav-link {% if profile_is_active %}active{% endif %}" href="/profile/">Profile</a>
           <a class="nav-item nav-link {% if trends_is_active %}active{% endif %}" href="/trends/">Trends</a>
-          <a class="nav-item nav-link {% if notifications_is_active %}active{% endif %}" href="/notifications/">Notifications</a>
+          <a class="nav-item nav-link {% if notifications_is_active %}active{% endif %}" href="/notifications/">
+              Notifications
+            {% if notification_count > 0 %} <span class="text-light px-1 py-1 bg-primary color-white rounded">{{ notification_count }}</span>{% endif %}
+          </a>
           <a class="nav-item nav-link {% if messages_is_active %}active{% endif %}" href="/messages/">Messages</a>
           <a class="nav-item nav-link {% if bookmark_is_active %}active{% endif %}" href="/bookmarks/">Bookmarks</a>
           <a class="nav-item nav-link {% if logout_is_active %}active{% endif %}" href="/logout/">Log out</a>

@@ -6,7 +6,6 @@
             {% include "ModularPost.html" with post=comment %}
         </div>
     </div>
-    <!-- TODO make comments smaller??-->
     <div class = "container">
     </div>
 
@@ -46,6 +45,9 @@
                 <img class="img-fluid" style="display: none;" id="media_preview">
             </div>
         </form>
+        {% for reply in replies %}
+            {% include "ModularPost.html" with post=reply %}
+        {% endfor %}
 
         <script>
         document.getElementById("upload").onchange = function () {

@@ -18,6 +18,7 @@ def create_reply_tweet(request, tweetID):
 
 @auth_or_redirect
 def create_reply_comment(request, commentID):
+    user_id = request.session.get("user_id", None)
     with connection.cursor() as cursor:
         result = cursor.execute("SELECT t.TWEET_ID, a.id, a.ACCOUNTNAME, a.PROFILE_PHOTO, p.TEXT, p.MEDIA, p.TIMESTAMP, p.ID "
                                  "FROM TWEET t "
@@ -32,6 +33,7 @@ def create_reply_comment(request, commentID):
             if request.POST:
                 return create_comment(request,result[0], commentID)
             else:
+
                 comment = {
                     "AUTHOR": result[2],
                     "PROFILE_PHOTO": result[3],
@@ -43,12 +45,63 @@ def create_reply_comment(request, commentID):
                 }  # your setup requires a separate tweet object
                 # would also be nice to set project rules for template context strings(i.e should they be full caps or not)
 
+                notification_count = cursor.callfunc("get_unseen_notif_count", int, [user_id])
+
+                cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={comment['POST_ID']};")
+                count = cursor.fetchone()[0]
+
+                if int(count) == 1:
+                    comment["LIKED"] = True
+
+                cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_BOOKMARKS_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={comment['POST_ID']};")
+                count = cursor.fetchone()[0]
+
+                if int(count) == 1:
+                    comment["BOOKMARKED"] = True
+
                 context = {
+                    "notification_count": notification_count,
                     "comment": comment,
                     "COMMENTID": commentID,  # use for generating link for comment reply button
                     "POST_ID":  result[7],
                     "USERLOGGEDIN": True,
                 }
+
+                cursor.execute('''SELECT 
+                                        AUTHOR, PROFILE_PHOTO,  TEXT, MEDIA, TIMESTAMP, POST_ID, COMMENT_ID, "replied_to"
+                                    FROM
+                                        COMMENT_VIEW 
+                                    WHERE
+                                        PARENT_COMMENT_ID = %s
+                                    ORDER BY TIMESTAMP ASC''', [commentID]);
+                comment_reply_result = cursor.fetchall()
+                replies = []
+                for reply_result in comment_reply_result:
+                    reply = {
+                        "AUTHOR": reply_result[0],
+                        "PROFILE_PHOTO": reply_result[1],
+                        "TEXT": reply_result[2],
+                        "MEDIA": reply_result[3],
+                        "TIMESTAMP": reply_result[4],
+                        "POST_ID": reply_result[5],
+                        "replied_to": reply_result[7],
+                        "COMMENTLINK": "/create/reply/comment/%s" % reply_result[6],
+                    }
+
+                    cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={reply['POST_ID']};")
+                    count = cursor.fetchone()[0]
+
+                    if int(count) == 1:
+                        reply["LIKED"] = True
+
+                    cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_BOOKMARKS_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={reply['POST_ID']};")
+                    count = cursor.fetchone()[0]
+
+                    if int(count) == 1:
+                        reply["BOOKMARKED"] = True
+
+                    replies.append(reply)
+                context['replies'] = replies
                 return render(request, "CommentReplyView.html", context)
         return HttpResponse("invalid parent comment id for comment")
     return HttpResponse("invalid GET request on POST URL")

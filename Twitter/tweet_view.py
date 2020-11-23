@@ -3,15 +3,8 @@ from django.db import connection
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.core.files.storage import FileSystemStorage
-
 from .auth import auth_or_redirect, is_user_authenticated
-
-#Working on the same view.py file together is a recipe for merge conflicts
-#I have separated the tweet part into a different py file.
-#Ideally, this should be a separate app but this is sufficient for now
-#It'd be best if you separate your stuff as well
 from .comment_view import __organizeCommentChains
-
 
 @auth_or_redirect
 def create_tweet(request):
@@ -88,7 +81,7 @@ def detailed_tweet_view(request, tweetID):
                     if int(count) == 1:
                         comment["LIKED"] = True
 
-                    cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_BOOKMARKS_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={result[5]};")
+                    cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_BOOKMARKS_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={comment['POST_ID']};")
                     count = cursor.fetchone()[0]
 
                     if int(count) == 1:
@@ -119,7 +112,10 @@ def detailed_tweet_view(request, tweetID):
             if int(count) == 1:
                 tweet["BOOKMARKED"] = True
 
+            notification_count = cursor.callfunc("get_unseen_notif_count", int, [user_id])
+
             context = {
+                "notification_count": notification_count,
                 "tweet": tweet,
                 "TWEETID": tweetID,#use for generating link for comment reply button
                 "USERLOGGEDIN": is_user_authenticated(request),
