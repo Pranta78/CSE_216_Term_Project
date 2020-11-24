@@ -284,6 +284,71 @@ def like_bookmark_handler(request):
     return HttpResponse("Invalid URL!")
 
 
+@auth_or_redirect
+def search(request):
+    user_id = request.session.get("user_id", None)
+    username = request.session.get("username")
+    post_list = []
+    searchWord = None
+
+    if request.GET.get('q', None):
+        searchWord = request.GET.get('q').strip()
+
+        if searchWord:
+            search_word = '%' + searchWord + '%'
+
+            with connection.cursor() as cursor:
+                cursor.execute('''SELECT TV.POST_ID, TIMESTAMP, TEXT, MEDIA, PROFILE_PHOTO, AUTHOR, COMMENTLINK
+                                  FROM TWEET_VIEW TV
+                                  WHERE TEXT LIKE :search_word
+                                  AND IS_USER_AUDIENCE(:username, TV.POST_ID) = 1
+                                  ORDER BY TV.TIMESTAMP DESC;''',
+                               {'search_word': search_word, 'username': username})
+                tweet_list = dictfetchall(cursor)
+
+                cursor.execute('''SELECT CV.POST_ID, TIMESTAMP, TEXT, MEDIA, PROFILE_PHOTO, AUTHOR,
+                                  COMMENTLINK, PARENT_COMMENT_LINK, PARENT_TWEET_LINK, "replied_to"
+                                  FROM COMMENT_VIEW CV
+                                  WHERE TEXT LIKE :search_word
+                                  AND IS_USER_AUDIENCE(:username, CV.POST_ID) = 1
+                                  ORDER BY CV.TIMESTAMP DESC;''',
+                               {'search_word': search_word, 'username': username})
+                comment_list = dictfetchall(cursor)
+
+                post_list = tweet_list + comment_list
+
+                for post in post_list:
+                    cursor.execute('''SELECT COUNT(*) FROM ACCOUNT_LIKES_POST
+                                      WHERE ACCOUNT_ID=:user_id
+                                      AND POST_ID=:post_id;''', {'user_id': user_id, 'post_id': post["POST_ID"]})
+                    count = cursor.fetchone()[0]
+
+                    # FOR whatever reason count was a STRING. #BlameOracle
+                    if int(count) > 0:
+                        post["LIKED"] = True
+
+                    cursor.execute(f'''SELECT COUNT(*) 
+                                       FROM ACCOUNT_BOOKMARKS_POST 
+                                       WHERE ACCOUNT_ID=:user_id
+                                       AND POST_ID=:postID;''', {'user_id': user_id, 'postID': post['POST_ID']})
+                    count = cursor.fetchone()[0]
+
+                    if int(count) > 0:
+                        post["BOOKMARKED"] = True
+
+                print("Printing posts containing search word: "+searchWord)
+                print(post_list)
+
+    template_name = "search.html"
+    context = {
+        'search_is_active': True,
+        'post_list': post_list,
+        'search_word': searchWord
+    }
+
+    return render(request, template_name, context)
+
+
 def dictfetchall(cursor):
     """Return all rows from a cursor as a dict"""
     columns = [col[0] for col in cursor.description]

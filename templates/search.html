@@ -1,0 +1,60 @@
+{% extends "skeleton.html" %}
+
+{% block skeleton_content %}
+    <h3 style="color: white; background-color: rgb(29, 161, 242)">
+        Search in posts!
+    </h3>
+
+    <form method="GET" class="form-inline" autocomplete="off">
+        <div class="form-group">
+
+          <input class="form-control" type="text" placeholder="Search" name="q" {% if search_word %}value="{{ search_word }}{% endif %}">
+
+          <button type="submit" class="btn">
+              <i class="fa fa-search fa-lg"></i>
+          </button>
+        </div>
+    </form>
+
+    <br>
+
+    <div class="row" id="search">
+        <div class="col-8">
+        {% if post_list|length > 0 %}
+            {% for post in post_list %}
+                {% include 'ModularPost.html' with post=post index=forloop.counter0%}
+            {% endfor %}
+        {% else %}
+            {% if search_word %}
+                No posts found!
+            {% endif %}
+        {% endif %}
+        </div>
+    </div>
+
+    {% block javascript %}
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    {% endblock %}
+
+    {% include 'ajax_like_bookmark.html' with div_id="search" only %}
+
+    {% if search_word %}
+
+    {% for post in post_list %}
+
+    <script>
+          data = document.getElementById("post_text_id{{ post.POST_ID }}").innerHTML;
+
+          searchWord = "{{ search_word }}";
+          regEx = new RegExp("(" + "{{ search_word }}" + ")(?!([^<]+)?>)", "gi");
+          //console.log("Printing word to search: "+"{{ search_word }}");
+          //console.log(data.replaceAll(regEx, '<span style="background-color: yellow">$&</span>'));
+          document.getElementById("post_text_id{{ post.POST_ID }}").innerHTML = data.replaceAll(regEx, '<span style="background-color: yellow">$&</span>');
+
+    </script>
+
+    {% endfor %}
+
+    {% endif %}
+
+{% endblock %}

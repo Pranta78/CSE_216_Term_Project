@@ -18,7 +18,8 @@ from django.conf.urls import url
 from django.conf import settings
 from django.conf.urls.static import static
 from .views import (create_account, login, home_page,
-                    logout, skeleton, bookmark, like_bookmark_handler)
+                    logout, skeleton, bookmark,
+                    like_bookmark_handler, search)
 
 from .profile_view import (profile, profile_edit, user_profile, follower,
                            following, viewLikedPosts, viewPostedTweets,
@@ -60,6 +61,7 @@ urlpatterns = [
     url(r'^decotest/', deco_test),
     url(r'^notifications/mentions/', mention_notifications_view, name='all_mention_notifications'),
     url(r'^notifications/', notifications_all_view, name='all_notifications'),
+    url(r'^search/$', search),
     url(r'^ajax/like_bookmark_handler/$', like_bookmark_handler, name='like_bookmark_handler')
 ]
 
