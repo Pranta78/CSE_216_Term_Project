@@ -10,7 +10,7 @@ def notifications_all_view(request):
     with connection.cursor() as cursor:
         notifications = get_follow_notifs(user_id)
         notifications.extend(get_mention_notifs(user_id))
-        #notifications.sort()
+        notifications.sort(key=lambda x: x["TIMESTAMP"], reverse=True)
 
         unseen_notification_count = 0
         for n in notifications:
@@ -77,7 +77,7 @@ def get_follow_notifs(user_id):
                     {
                         "NOTIFICATION_ID": result_row[0],
                         "TIMESTAMP": result_row[1],
-                        "SEEN": result_row[2] is not None,  # null if not seen
+                        "SEEN": result_row[2],  # null if not seen
                         "NOTIFICATION_LINK": f"/user/{result_row[3]}/",
                         "NOTIFICATION_TEXT": f"{result_row[3]} has followed you.",
                     }
@@ -107,7 +107,7 @@ def get_mention_notifs(user_id):
                 mention_notifications.append(
                     {
                         "TIMESTAMP": result_row[1],
-                        "SEEN": result_row[2] is not None,  # null if not seen
+                        "SEEN": result_row[2],  # null if not seen
                         "NOTIFICATION_LINK": f"/tweet/{result_row[4]}/",
                         "NOTIFICATION_TEXT": f"You were mentioned in a post by {result_row[5]} .",
                     }

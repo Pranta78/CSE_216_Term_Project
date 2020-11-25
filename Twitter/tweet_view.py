@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.core.files.storage import FileSystemStorage
 from .auth import auth_or_redirect, is_user_authenticated
 from .comment_view import __organizeCommentChains
+import re
 
 @auth_or_redirect
 def create_tweet(request):
@@ -30,8 +31,14 @@ def create_tweet(request):
 
             with connection.cursor() as cursor:
                 newTweetIdVar = 0
-                result = cursor.callproc("CREATE_TWEET", [user_id, tweetBody, media, allowed_accounts, newTweetIdVar])
-                print(result[4])
+                new_post_id_var = 0
+                result = cursor.callproc("CREATE_TWEET", [user_id, tweetBody, media, allowed_accounts, newTweetIdVar, new_post_id_var])
+
+                if tweetBody:
+                    mentions = fetch_mentioned_users_from_post()
+                    for mention in mentions:
+                        cursor.callproc("CREATE_MENTION_NOTIF", [post])
+
                 connection.commit()
                 return redirect(reverse('detailedTweetView', kwargs={"tweetID": result[4]}))
 
@@ -128,3 +135,6 @@ def detailed_tweet_view(request, tweetID):
     return HttpResponse("TWEET DOES NOT EXIST")
 
 
+def fetch_mentioned_users_from_post(post_body):
+    regex = '/@(\w+)/g'
+    return re.match(regex, post_body)

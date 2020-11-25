@@ -79,8 +79,10 @@
           regex = /#(\w+)/g;
           data = document.getElementById("post_text_id{{ post.POST_ID }}").textContent;
           //console.log("Printing text data: "+data);
-          //console.log("Printing replaced data: "+data.replaceAll(regex, '<a href="/hashtag/$1/">#$1</a>'));
-          document.getElementById("post_text_id{{ post.POST_ID }}").innerHTML = data.replaceAll(regex, '<a href="/hashtag/$1/">#$1</a>');
+          data = data.replaceAll(regex, '<a href="/hashtag/$1/">#$1</a>');
+          regex = /@(\w+)/g;
+          data = document.getElementById("post_text_id{{ post.POST_ID }}").innerHTML = data.replaceAll(regex, '<a href="/user/$1/">@$1</a>')
+          //console.log("Printing replaced data: "+data);
     </script>
 
     {% endif %}

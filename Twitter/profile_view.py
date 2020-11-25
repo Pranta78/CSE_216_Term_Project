@@ -162,7 +162,7 @@ def populateProfile(profilename, username, user_id):
             row = cursor.fetchone()
 
             # if user is visiting his own profile
-            if row[0] != 0 or (username == profilename):
+            if int(row[0]) != 0 or (username == profilename):
                 follows_user = True
 
     # user is visiting his own profile
