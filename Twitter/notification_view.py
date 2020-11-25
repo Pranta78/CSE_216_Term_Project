@@ -10,7 +10,7 @@ def notifications_all_view(request):
     with connection.cursor() as cursor:
         notifications = get_follow_notifs(user_id)
         notifications.extend(get_mention_notifs(user_id))
-        notifications.sort()
+        #notifications.sort()
 
         unseen_notification_count = 0
         for n in notifications:
