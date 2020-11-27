@@ -5,9 +5,33 @@
 {% block content %}
 <!-- end-->
 
-<a class = "card {% if SEEN %}bg-primary {% else %} bg-white{% endif %}" href = {{ notification.NOTIFICATION_LINK }} >
-    <div class="card-body">
-        {{notification.NOTIFICATION_TEXT}}
-    </div>
-</a>
+
+<form action="/see/notification/" method="POST"> {% csrf_token %}
+    <input type="hidden" name="NOTIFICATION_LINK" value={{ notification.NOTIFICATION_LINK}}>
+    <input type="hidden" name="NOTIFICATION_ID" value={{ notification.NOTIFICATION_ID}}>
+
+        <div class="container-fluid mx-0 my-0">
+            <div class="row">
+
+                <button type="submit" class=" btn btn-link text-left " style="width:100%;">
+                    <div class = "card">
+                        <h6 class="card-title ml-2" style="display: inline;">{{ notification.TIMESTAMP }}
+                            <small class="text-white bg-primary rounded px-2">
+                                {% if notification.SEEN %}
+                                  Seen {{ notification.SEEN }}
+                                {% endif %}
+                            </small>
+                        </h6>
+                        <div class = "card-body py-2">
+                            {{notification.NOTIFICATION_TEXT}}
+                        </div>
+                    </div>
+                </button>
+
+            </div>
+        </div>
+
+
+</form>
+
 {% endblock %}

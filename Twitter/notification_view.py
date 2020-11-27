@@ -12,40 +12,53 @@ def notifications_all_view(request):
         notifications.extend(get_mention_notifs(user_id))
         notifications.sort(key=lambda x: x["TIMESTAMP"], reverse=True)
 
-        unseen_notification_count = 0
-        for n in notifications:
-            #had some problems with executemany.
-            #as the inserts only occur for newly seen notifs, running separate queries should not be a problem.
-            if n["SEEN"] is None:
-                cursor.execute("UPDATE NOTIFICATION_NOTIFIES_ACCOUNT "
-                                "set SEEN = sysdate "
-                                "WHERE NOTIFICATION_ID = %s ", [n["NOTIFICATION_ID"]])
-                unseen_notification_count += 1
-
         unseen_notification_count = cursor.callfunc("get_unseen_notif_count", int, [user_id])
         context = {
             "notification_count": unseen_notification_count,
             "NOTIFICATIONS": notifications,
             "all_notifs_active": True,
         }
+
+        print(notifications)
         return render(request, "NotificationView.html", context)
 
     return HttpResponse("notifERROR")
+
+@auth_or_redirect
+def handle_notif_click(request):
+    if request.POST:
+        user_id = request.session.get("user_id", None)
+        notification_id = request.POST["NOTIFICATION_ID"]
+        redirect_link = request.POST["NOTIFICATION_LINK"]
+        if notification_id:
+            with connection.cursor() as cursor:
+                result = cursor.execute('''
+                    SELECT
+                        COUNT(*)
+                    FROM
+                        NOTIFICATION_NOTIFIES_ACCOUNT
+                    WHERE
+                        ACCOUNT_ID = %s AND
+                        NOTIFICATION_ID = %s AND
+                        SEEN is NULL
+                    ''',[user_id, notification_id]).fetchone()
+                print(result)
+                if result and int(result[0]) == 1:#need to check if the notification belongs to user
+                    cursor.execute("UPDATE NOTIFICATION_NOTIFIES_ACCOUNT "
+                                   "set SEEN = sysdate "
+                                   "WHERE NOTIFICATION_ID = %s ", [notification_id])
+
+            if redirect_link:
+                return redirect(redirect_link)
+
+        return redirect("INVALID GET REQUEST ON POST URL.")
+
 
 @auth_or_redirect
 def mention_notifications_view(request):
     user_id = request.session.get("user_id", None)
     with connection.cursor() as cursor:
         notifications = get_mention_notifs(user_id)
-
-        for n in notifications:
-            #had some problems with executemany.
-            #as the inserts only occur for newly seen notifs, running separate queries should not be a problem.
-            if n["SEEN"] is None:
-                cursor.execute("UPDATE NOTIFICATION_NOTIFIES_ACCOUNT "
-                                "set SEEN = sysdate "
-                                "WHERE NOTIFICATION_ID = %s ", [n["NOTIFICATION_ID"]])
-
         unseen_notification_count = cursor.callfunc("get_unseen_notif_count", int, [user_id])
         context = {
             "notification_count": unseen_notification_count,
@@ -106,6 +119,7 @@ def get_mention_notifs(user_id):
             for result_row in results_rows:
                 mention_notifications.append(
                     {
+                        "NOTIFICATION_ID": result_row[0],
                         "TIMESTAMP": result_row[1],
                         "SEEN": result_row[2],  # null if not seen
                         "NOTIFICATION_LINK": f"/tweet/{result_row[4]}/",
