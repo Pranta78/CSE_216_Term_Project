@@ -62,7 +62,8 @@ urlpatterns = [
     url(r'^notifications/mentions/$', mention_notifications_view, name='all_mention_notifications'),
     url(r'^notifications/$', notifications_all_view, name='all_notifications'),
     url(r'^search/$', search),
-    url(r'^ajax/like_bookmark_handler/$', like_bookmark_handler, name='like_bookmark_handler')
+    url(r'^ajax/like_bookmark_handler/$', like_bookmark_handler, name='like_bookmark_handler'),
+    url(r'^$', home_page),
 ]
 
 if settings.DEBUG:
