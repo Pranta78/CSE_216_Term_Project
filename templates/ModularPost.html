@@ -52,7 +52,7 @@
 {#        <input type="hidden" value={{ post.POST_ID }} name="postID">#}
 {#        <input type="hidden" value={{ index }} name="indexID">#}
 
-        <button class="btn"><i class="fa fa-retweet fa-lg"></i> Retweet</button>
+        <a href="{% url "create_retweet" post.POST_ID %}" class="btn" role="button"><i class="fa fa-retweet fa-lg"></i> Retweet</a>
 
         <a href= "{{ post.COMMENTLINK }}" class="btn" role="button"><i class="fa fa-comment-o fa-lg"></i> Comment</a>
 {#        <a href= "/tweet/{{ post.ID }}#tweet-reply-box" class="btn" role="button"><i class="fa fa-comment-o"></i> Comment</a>#}

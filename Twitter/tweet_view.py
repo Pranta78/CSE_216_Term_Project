@@ -14,8 +14,7 @@ def create_retweet(request, post_id):
     user_id = request.session['user_id']
     if request.POST:
         text = request.POST["TEXT"]
-
-        if user_id and post_id and text:
+        if user_id and post_id:
             with connection.cursor() as cursor:
                 msg = ''
                 pm_notification_id = 0
@@ -28,10 +27,12 @@ def create_retweet(request, post_id):
                 connection.commit()
                 return redirect(reverse('detailed_retweet_view', kwargs={
                     "account_name": retweeted_author_name,
-                    "post_id": post_id,
-                    "pm_notification_id": pm_notification_id
+                    "post_id": int(post_id),
+                    "pm_notification_id": int(pm_notification_id)
                 }))
-    elif request.GET:
+        else:
+            return HttpResponse(f"invalid (account_id, post_ID)={user_id},{post_id},  for create retweet link POST request")
+    else:
         with connection.cursor() as cursor:
             result = cursor.execute('''SELECT ACCOUNTNAME FROM ACCOUNT WHERE ID = %s''', [user_id]).fetchone()
             account_name = result[0]
@@ -46,7 +47,7 @@ def create_retweet(request, post_id):
             ''', [post_id]).fetchone()
 
             if result is None:
-                cursor.execute('''
+                result = cursor.execute('''
                 SELECT
                     POST_ID, TIMESTAMP, TEXT, MEDIA,AUTHOR, PROFILE_PHOTO, COMMENT_ID
                 FROM 
@@ -60,21 +61,18 @@ def create_retweet(request, post_id):
 
             context = {
                 "AUTHOR": account_name,
-                "AUTHOR_PROFILE_PHOTO": result[1],
                 "POST": {
-                    "AUTHOR": result[6],
-                    "PROFILE_PHOTO": result[7],
-                    "TEXT": result[8],
-                    "MEDIA": result[9],
-                    "TIMESTAMP": result[10],
-                    "POST_ID": result[5],
+                    "AUTHOR": result[4],
+                    "PROFILE_PHOTO": result[5],
+                    "TEXT": result[2],
+                    "MEDIA": result[3],
+                    "TIMESTAMP": result[1],
+                    "POST_ID": result[0],
                     "COMMENTLINK": "#tweet-reply-box",
                 },
                 "USERLOGGEDIN": is_user_authenticated(request),
-                # "COMMENTCHAINS": comment_chains,
             }
-            return  render(request, "CreateRetweetView.html", context)
-
+            return render(request, "CreateRetweetView.html", context)
 
     return HttpResponse("Invalid GET request on POST URL")
 
@@ -88,12 +86,6 @@ def detailed_retweet_view(request, account_name, post_id, pm_notification_id):
 # 	JOIN NOTIFICATION_NOTIFIES_ACCOUNT nna on(nna.NOTIFICATION_ID = bn.ID)
 # 	JOIN ACCOUNT_POSTS_POST app on(app.ACCOUNT = )''';
 #     t = '''SELECT *
-# FROM
-# 	ACCOUNT_RETWEETS_POST arp
-# 	JOIN POST_MENTION_NOTIFICATION pmn on(arp.PM_NOTIFICATION_ID = pmn.POST_MENTION_NOTIFICATION_ID)
-# 	JOIN NOTIFICATION bn on(bn.ID = pmn.NOTIFICATION_BASE_ID)
-# 	JOIN NOTIFICATION_NOTIFIES_ACCOUNT nna on(nna.NOTIFICATION_ID = bn.ID)
-# 	JOIN ACCOUNT_POSTS_POST app on(app.ACCOUNT = )'''
 
     with connection.cursor() as cursor:
         result = cursor.execute('''
