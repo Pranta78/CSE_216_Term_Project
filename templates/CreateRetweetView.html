@@ -1,0 +1,76 @@
+{% extends "skeleton.html" %}
+<!--the modular post html should not concern itself with showing comments -->
+{% block skeleton_content %}
+    <div class="row">
+        <div class="col-8" id="comment">
+            {% include "ModularPost.html" with post=comment %}
+        </div>
+    </div>
+    <div class = "container">
+    </div>
+
+        {% if USERLOGGEDIN %}
+        <form method="POST" enctype="multipart/form-data" action = "/create/reply/comment/{{ COMMENTID }}/">{% csrf_token %}
+
+            <div class="col-8">
+                <div class="form-row">
+                   <textarea class="form-control" placeholder="Reply?" name = "CommentBody" id="inputCommentBody" ></textarea>
+                </div>
+             </div>
+
+            <div class="form-row">
+                <div class="col-4" align="left">
+                    <!--
+                    Privacy settings for comments don't make sense. Kept for now
+                    This should be an attribute for tweet, not post base entity
+                    -->
+                    <select name="privacy" id="privacyDropDown">
+                        <option value="PUBLIC" selected="selected">Public</option>
+                        <option value="FOLLOWER">Follower</option>
+                        <option value="MENTION">Mention</option>
+                    </select>
+
+                    <label for="upload">
+                        <span class="fa fa-file-image-o fa-lg" aria-hidden="true"> Attach</span>
+                        <input type="file" accept="image/*" id="upload" name="Media" style="display:none" value="upload">
+                    </label>
+
+                 </div>
+                <div class="col-4" align="right">
+                    <button type="submit" class="btn btn-primary">Comment</button>
+                </div>
+            </div>
+
+            <div class="row" align="center">
+                <img class="img-fluid" style="display: none;" id="media_preview">
+            </div>
+        </form>
+        {% for reply in replies %}
+            {% include "ModularPost.html" with post=reply %}
+        {% endfor %}
+
+        <script>
+        document.getElementById("upload").onchange = function () {
+                let reader = new FileReader();
+
+                reader.onload = function (e) {
+                    console.log("File is "+e.target.result);
+                    document.getElementById("media_preview").style.display = "block";
+                    document.getElementById("media_preview").src = e.target.result;
+
+                };
+
+                // read the image file as a data URL.
+                reader.readAsDataURL(this.files[0]);
+            };
+        </script>
+
+    {% endif %}
+
+    {% block javascript %}
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    {% endblock %}
+
+    {% include 'ajax_like_bookmark.html' with div_id="comment" only %}
+
+{% endblock %}
