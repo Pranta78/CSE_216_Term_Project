@@ -15,13 +15,13 @@ def create_account(request):
                 username = request.POST.get('username', None)
                 password = request.POST.get('password', None)
                 birthday = request.POST.get('birthday', None)
-                data = cursor.callproc('CREATE_ACCOUNT', (email, username, password, birthday, 'default'*30))
+                data = cursor.callproc('CREATE_ACCOUNT', [email, username, password, birthday, 'default'*30])
                 print(data)
                 print(data[4])
                 if data[4] != 'OK':
                     message = data[4]
                 else:
-                    cursor.execute(f"SELECT ID FROM ACCOUNT WHERE ACCOUNTNAME='{username}';")
+                    cursor.execute(f"SELECT ID FROM ACCOUNT WHERE ACCOUNTNAME=:username;", {'username': username})
                     row = cursor.fetchall()
                     print("Printing fetch all...")
                     print(row)
@@ -52,7 +52,7 @@ def login(request):
         password = request.POST.get('password', None)
 
         with connection.cursor() as cursor:
-            data = cursor.callproc('LOGIN', (username, password, 'default'*30, user_id, 'default'*10))
+            data = cursor.callproc('LOGIN', [username, password, 'default'*30, user_id, 'default'*10])
             if data[2] == 'OK':
                 print(data)
                 print('You ARE authenticated!')
@@ -88,22 +88,8 @@ def home_page(request):
 
     # All tweets from all people the user follows will be shown in reverse chronological order
     tweetlist = None
-    notification_count = 0;
+    notification_count = 0
     with connection.cursor() as cursor:
-        # cursor.execute(f'''SELECT T.TWEET_ID ID, P.TEXT, P.MEDIA, P.TIMESTAMP, P.ID POST_ID,
-        #             (SELECT ACCOUNTNAME FROM ACCOUNT A WHERE A.ID=APP.ACCOUNT_ID) AUTHOR,
-        #             (SELECT PROFILE_PHOTO FROM ACCOUNT A WHERE A.ID=APP.ACCOUNT_ID) PROFILE_PHOTO
-        #             FROM POST P JOIN TWEET T
-        #             ON (P.ID = T.POST_ID)
-        #             JOIN ACCOUNT_POSTS_POST	APP
-        #             ON (T.POST_ID = APP.POST_ID)
-        #             JOIN FOLLOW_NOTIFICATION FN
-        #             ON (APP.ACCOUNT_ID = FN.FOLLOWED_ACCOUNT_ID)
-        #             JOIN ACCOUNT_FOLLOWS_ACCOUNT AFA
-        #             ON (FN.FOLLOW_NOTIFICATION_ID = AFA.F_NOTIFICATION_ID)
-        #             WHERE AFA.ACCOUNT_ID = {user_id}
-        #             ORDER BY P.TIMESTAMP DESC;''')
-
         cursor.execute(f'''SELECT TV.POST_ID, TIMESTAMP, TEXT, MEDIA, PROFILE_PHOTO, AUTHOR, COMMENTLINK
                            FROM TWEET_VIEW TV
                            JOIN FOLLOW_NOTIFICATION FN
@@ -138,7 +124,8 @@ def home_page(request):
                "username": username,
                "tweet_list": tweetlist,
                "notification_count": notification_count,
-               "home_is_active": True}
+               "home_is_active": True,
+               "suggestions": fetch_suggested_profile(username)}
 
     template_name = "home.html"
 
@@ -162,15 +149,6 @@ def bookmark(request):
     username = request.session.get("username")
 
     with connection.cursor() as cursor:
-        # cursor.execute('''SELECT P.ID POST_ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
-        #                    FROM ACCOUNT_BOOKMARKS_POST ALP JOIN POST P
-        #                    ON(ALP.POST_ID = P.ID)
-        #                    JOIN ACCOUNT_POSTS_POST APP
-        #                    ON(P.ID = APP.POST_ID)
-        #                    JOIN ACCOUNT A
-        #                    ON(APP.ACCOUNT_ID = A.ID)
-        #                    WHERE ALP.ACCOUNT_ID = :user_id;''', {'user_id': user_id})
-
         cursor.execute('''SELECT TV.POST_ID, TIMESTAMP, TEXT, MEDIA, PROFILE_PHOTO, AUTHOR,
                           COMMENTLINK
                           FROM ACCOUNT_BOOKMARKS_POST ALP JOIN TWEET_VIEW TV
@@ -347,6 +325,93 @@ def search(request):
     }
 
     return render(request, template_name, context)
+
+
+def fetch_suggested_profile(username):
+    suggestions = []
+
+    with connection.cursor() as cursor:
+        # Suggest the profile of people followed by the user's following people
+        # Avoid suggesting the profile of current user, and people he already follows
+        cursor.execute('''SELECT A.ACCOUNTNAME, A.PROFILE_PHOTO, F1.FOLLOWER
+                          FROM ACCOUNT A JOIN FOLLOWER F1
+                          ON (F1.FOLLOWED = A.ACCOUNTNAME)
+                          JOIN FOLLOWER F2
+                          ON (F1.FOLLOWER = F2.FOLLOWED)
+                          WHERE F2.FOLLOWER = :username
+                          AND F1.FOLLOWED <> :username
+                          AND F1.FOLLOWED NOT IN
+                            (SELECT FOLLOWED
+                            FROM FOLLOWER
+                            WHERE FOLLOWER = :username
+                            );''',
+                       {'username': username})
+
+        suggestions = dictfetchall(cursor)
+
+        # Suggest profiles of people with the most followers
+        # Avoid suggesting the profile of current user, and people he already follows
+        cursor.execute('''SELECT A.ACCOUNTNAME, A.PROFILE_PHOTO
+                          FROM ACCOUNT A JOIN FOLLOWER F
+                          ON(A.ACCOUNTNAME = F.FOLLOWED)
+                          WHERE F.FOLLOWED <> :username
+                          AND F.FOLLOWED NOT IN
+                            (SELECT FOLLOWED
+                            FROM FOLLOWER
+                            WHERE FOLLOWER = :username
+                            )
+                          GROUP BY F.FOLLOWED, A.ACCOUNTNAME, A.PROFILE_PHOTO
+                          ORDER BY COUNT(F.FOLLOWER) DESC;''',
+                       {'username': username})
+
+        temp = dictfetchall(cursor)
+
+        # check for duplicate user names
+        for temp_suggestion in temp:
+            if temp_suggestion["ACCOUNTNAME"] not in [suggestion["ACCOUNTNAME"] for suggestion in suggestions]:
+                suggestions.append(temp_suggestion)
+
+        # Suggest profiles of people who follow the current user
+        # Avoid suggesting the profile of current user, and people he already follows
+        cursor.execute('''SELECT A.ACCOUNTNAME, A.PROFILE_PHOTO, F.FOLLOWER FOLLOWS
+                          FROM ACCOUNT A JOIN FOLLOWER F
+                          ON (A.ACCOUNTNAME = F.FOLLOWER)
+                          WHERE F.FOLLOWED = :username
+                          AND F.FOLLOWER <> :username
+                          AND F.FOLLOWER NOT IN
+                              (SELECT FOLLOWED
+                              FROM FOLLOWER
+                              WHERE FOLLOWER = :username);''',
+                       {'username': username})
+
+        temp = dictfetchall(cursor)
+
+        for temp_suggestion in temp:
+            if temp_suggestion["ACCOUNTNAME"] not in [suggestion["ACCOUNTNAME"] for suggestion in suggestions]:
+                suggestions.append(temp_suggestion)
+
+        # Suggest profiles of people with no followers
+        # Avoid suggesting the profile of current user, and people he already follows
+        cursor.execute('''SELECT A.ACCOUNTNAME, A.PROFILE_PHOTO
+                          FROM ACCOUNT A 
+                          WHERE A.ACCOUNTNAME <> :username
+                          AND A.ACCOUNTNAME NOT IN
+                              (SELECT FOLLOWED
+                              FROM FOLLOWER
+                              WHERE FOLLOWER = :username
+                              );''',
+                       {'username': username})
+
+        temp = dictfetchall(cursor)
+
+        for temp_suggestion in temp:
+            if temp_suggestion["ACCOUNTNAME"] not in [suggestion["ACCOUNTNAME"] for suggestion in suggestions]:
+                suggestions.append(temp_suggestion)
+
+        print("Printing suggestions for user: "+username)
+        print(suggestions)
+
+    return suggestions
 
 
 def dictfetchall(cursor):

@@ -117,7 +117,7 @@ def inbox(request, receiver):
 
         with connection.cursor() as cursor:
             data = cursor.callproc('INSERT_MESSAGE',
-                                   (username, receiver, chat, media, 'default' * 10, '01-JAN-2020', '01-JAN-2020'))
+                                   [username, receiver, chat, media, 'default' * 10, '01-JAN-2020', '01-JAN-2020'])
             if data[4] == 'OK':
                 print(data)
                 print('Message sent!')
