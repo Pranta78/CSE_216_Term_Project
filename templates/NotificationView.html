@@ -25,6 +25,7 @@
                         {% if NOTIFICATIONS %}
                             {% for n in NOTIFICATIONS %}
                                 {% include "ModularNotificationCard.html" with notification=n %}
+                                <br>
                             {% endfor %}
                         {% else %}
                             No notifications to show.

@@ -28,10 +28,10 @@ from .profile_view import (profile, profile_edit, user_profile, follower,
 from .message_view import message, inbox
 from .trends_view import show_hashtag, trend
 
-from .tweet_view import detailed_tweet_view, create_tweet
+from .tweet_view import detailed_tweet_view, create_tweet, detailed_retweet_view, create_retweet
 from .comment_view import create_reply_tweet, create_reply_comment
 from .auth import deco_test
-from .notification_view import notifications_all_view,mention_notifications_view
+from .notification_view import notifications_all_view,mention_notifications_view, handle_notif_click
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
@@ -55,14 +55,18 @@ urlpatterns = [
     url(r'^hashtag/(\w+)/$', show_hashtag, name='hashtag'),
     url(r'^trends/$', trend),
     url(r'^create/tweet/', create_tweet),
-    url(r'^create/reply/tweet/(?P<tweetID>\w+)/$', create_reply_tweet),
-    url(r'^create/reply/comment/(?P<commentID>\w+)/$', create_reply_comment),
-    url(r'^tweet/(?P<tweetID>\w+)/$', detailed_tweet_view, name='detailedTweetView'),
-    url(r'^decotest/', deco_test),
-    url(r'^notifications/mentions/', mention_notifications_view, name='all_mention_notifications'),
-    url(r'^notifications/', notifications_all_view, name='all_notifications'),
+    url(r'^create/reply/tweet/(?P<tweetID>[0-9]+)/$', create_reply_tweet),
+    url(r'^create/reply/comment/(?P<commentID>[0-9]+)/$', create_reply_comment, name='comment_reply_view'),
+    url(r'^tweet/(?P<tweetID>[0-9]+)/$', detailed_tweet_view, name='detailedTweetView'),
+    url(r'^decotest/$', deco_test),
+    url(r'^notifications/mentions/$', mention_notifications_view, name='all_mention_notifications'),
+    url(r'^notifications/$', notifications_all_view, name='all_notifications'),
+    url(r'^see/notification/$', handle_notif_click, name='handle_notification_click'),
     url(r'^search/$', search),
-    url(r'^ajax/like_bookmark_handler/$', like_bookmark_handler, name='like_bookmark_handler')
+    url(r'^user/(?P<account_name>\w+)/retweet/(?P<post_id>[0-9]+)/(?P<pm_notification_id>[0-9]+)/$', detailed_retweet_view, name='detailed_retweet_view'),
+    url(r'^create/retweet/(\w+)/$', create_retweet, name='create_retweet'),
+    url(r'^ajax/like_bookmark_handler/$', like_bookmark_handler, name='like_bookmark_handler'),
+    url(r'^$', home_page),
 ]
 
 if settings.DEBUG:

@@ -1,16 +1,59 @@
 {% extends "skeleton.html" %}
 <!--the modular post html should not concern itself with showing comments -->
 {% block skeleton_content %}
-    <div class="row">
-        <div class="col-8" id="post">
-            {% include "ModularPost.html" with post=comment %}
-        </div>
-    </div>
-    <div class = "container">
-    </div>
 
-        {% if USERLOGGEDIN %}
-        <form method="POST" enctype="multipart/form-data" action = "/create/reply/comment/{{ COMMENTID }}/">{% csrf_token %}
+    <div class=" card col-12">
+         <div class="card-body">
+            <h5 class="card-title " style="display: inline;">
+                <i class="fa fa-retweet fa-lg"></i>{{ RT.AUTHOR  }} <a href="{% url 'user_profile' RT.AUTHOR %}">
+                    @{{ RT.AUTHOR  }}
+                </a> Retweeted
+            </h5>
+           <p class="card-text"><small class="text-muted">{{ RT.TIMESTAMP }}</small></p>
+             <div id ="post">
+                 {% include "ModularPost.html" with post=RT.POST %}
+            </div>
+         </div>
+     </div>
+
+    <!-- TODO make comments smaller??-->
+
+    <br><p class="h4"> Comments: </p> <br>
+    <div id="comment">
+     {% for commentChain in COMMENTCHAINS %}
+            {% if commentChain.1 %}
+                <div class="row">
+                    <div class="col-8">
+                        <div class="card mx-1 py-2 ">
+                        {% include "ModularPost.html" with post=commentChain.0 %}
+                            <div class="card-body ml-3 mr-0 pr-2">
+                                {% for comment in commentChain.1 %}
+                                    {% include "ModularPost.html" with post=comment %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="row">
+                    <div class="col-8 px-1">
+                    {% include "ModularPost.html" with post=commentChain.0 %}
+                    <div>
+               <div>
+            {% endif %}
+{#            <div class="row">#}
+{#                <div class="col-8">#}
+{#                {% for comment in commentChain %}#}
+{#                    {% include "ModularPost.html" with post=comment %}#}
+{#                {% endfor %}#}
+{#                </div>#}
+{#            </div>#}
+        {% endfor %}
+    </div>
+    <!--TODO make this fixed to the bottom of the screen so that user doesn't have to scroll -->
+    {% if USERLOGGEDIN %}
+        <a id ="tweet-reply-box">
+        <form method="POST" enctype="multipart/form-data" action = "/create/reply/tweet/{{ TWEETID }}/">{% csrf_token %}
 
             <div class="col-8">
                 <div class="form-row">
@@ -45,12 +88,7 @@
                 <img class="img-fluid" style="display: none;" id="media_preview">
             </div>
         </form>
-
-        <div id="comment">
-        {% for reply in replies %}
-            {% include "ModularPost.html" with post=reply %}
-        {% endfor %}
-        </div>
+        </a>
 
         <script>
         document.getElementById("upload").onchange = function () {
@@ -68,13 +106,12 @@
             };
         </script>
 
-    {% endif %}
-
     {% block javascript %}
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
     {% endblock %}
 
-    {% include 'ajax_like_bookmark.html' with div_id="comment" only %}
     {% include 'ajax_like_bookmark.html' with div_id="post" only %}
+    {% include 'ajax_like_bookmark.html' with div_id="comment" only %}
+    {% endif %}
 
 {% endblock %}
