@@ -16,11 +16,11 @@
                 <button type="submit" class=" btn btn-link text-left " style="width:100%;">
                     <div class = "card">
                         <h6 class="card-title ml-2" style="display: inline;">{{ notification.TIMESTAMP }}
-                            <small class="text-white bg-primary rounded px-2">
-                                {% if notification.SEEN %}
-                                  Seen {{ notification.SEEN }}
-                                {% endif %}
-                            </small>
+                            {% if notification.SEEN %}
+                                <small class="text-white bg-primary rounded px-2">
+                                      Seen {{ notification.SEEN }}
+                                </small>
+                            {% endif %}
                         </h6>
                         <div class = "card-body py-2">
                             {{notification.NOTIFICATION_TEXT}}

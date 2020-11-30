@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 
 from Twitter.auth import auth_or_redirect
+from .notification_view import insert_mention_notif_from_post_text
 
 
 @auth_or_redirect
@@ -27,7 +28,7 @@ def create_reply_comment(request, commentID):
                                  "JOIN ACCOUNT_POSTS_POST app on(app.POST_ID = c.POST_ID)"
                                  "JOIN ACCOUNT a on (app.ACCOUNT_ID = a.ID)"
                                  "WHERE c.COMMENT_ID =  %s", [commentID]).fetchone()
-        print(f"commanet reply {result}")
+        print(f"commant reply {result}")
 
         if result is not None:
             if request.POST:
@@ -42,7 +43,7 @@ def create_reply_comment(request, commentID):
                     "TIMESTAMP": result[6],
                     "POST_ID": result[7],
                     "COMMENTLINK": "/create/reply/comment/%s" % commentID,
-                }  # your setup requires a separate tweet object
+                }
                 # would also be nice to set project rules for template context strings(i.e should they be full caps or not)
 
                 notification_count = cursor.callfunc("get_unseen_notif_count", int, [user_id])
@@ -136,13 +137,24 @@ def create_comment(request, tweetID, parentCommentID):
 
             with connection.cursor() as cursor:
                 newCommentID = 0
-                # I was getting errors with default parameters so a create_root_comment proc was added
+                new_post_id = 0
+                new_notif_id = 0
+                new_pm_notif_id = 0
                 if parentCommentID is None:
-                    result = cursor.callproc("CREATE_ROOT_COMMENT", [user_id, tweetID, commentBody, media, allowed_accounts, newCommentID])
+                    result = cursor.callproc("CREATE_ROOT_COMMENT",
+                                             [user_id, tweetID, commentBody, media, allowed_accounts,
+                                              newCommentID, new_notif_id, new_pm_notif_id, new_post_id])
                 else:
                     result = cursor.callproc("CREATE_COMMENT",
-                                             [user_id, tweetID, parentCommentID, commentBody, media, allowed_accounts, newCommentID])
-                print(result[4])
+                                         [user_id, tweetID, parentCommentID, commentBody, media, allowed_accounts,
+                                          newCommentID, new_notif_id, new_pm_notif_id, new_post_id])
+                new_commentID = result[5]
+                new_notif_id = result[6]
+                new_pm_notif_id = result[7]
+                new_post_id = result[8]
+
+                insert_mention_notif_from_post_text(cursor, commentBody, new_notif_id, new_pm_notif_id, new_post_id)
+
                 connection.commit()
                 return redirect(reverse('detailedTweetView', kwargs={"tweetID": tweetID}))#TODO add comment chain focused view
 
@@ -150,35 +162,75 @@ def create_comment(request, tweetID, parentCommentID):
 
     return HttpResponse("invalid GET request on POST URL")
 
+def get_tweet_comments_unorganized(cursor, tweet_id):
+    result = cursor.execute('''
+        SELECT
+            POST_ID, TIMESTAMP, TEXT, MEDIA,AUTHOR, PROFILE_PHOTO, COMMENT_ID, "replied_to", PARENT_COMMENT_ID, TWEET_ID
+        FROM 
+            COMMENT_VIEW 
+        WHERE
+            TWEET_ID = %s
+        ORDER BY
+		    TIMESTAMP ASC
+    ''', [tweet_id]).fetchall()
 
-def __organizeCommentChains(comment_results):
+    comments = []
+    for result_row in result:
+        comment = {
+            "AUTHOR": result_row[4],
+            "PROFILE_PHOTO": result_row[5],
+            "TEXT": result_row[2],
+            "MEDIA": result_row[3],
+            "TIMESTAMP": result_row[1],
+            "POST_ID": result_row[0],
+            "COMMENT_ID": result_row[6],
+            "PARENT_COMMENT_ID": result_row[8],
+            "COMMENTLINK": reverse("comment_reply_view", kwargs={"commentID": result_row[6]}),
+        }
+        if result_row[8]:
+            comment["replied_to"] = result_row[7]
+        comments.append(comment)
+    return comments
+
+def organizeCommentChains(comments):
     comment_chains = []#list of lists, first entry = root, anything after is a reply in that chain
     chain_dict = {}
     parent_dict ={}#temp disjoint set
-    for result_row in comment_results:
-        comment_id = result_row[7]
-
-        comment = {
-            "AUTHOR": result_row[1],
-            "PROFILE_PHOTO": result_row[2],
-            "TEXT": result_row[3],
-            "MEDIA": result_row[4],
-            "TIMESTAMP": result_row[5],
-            "POST_ID": result_row[6],
-            "replied_to": result_row[9],
-            "COMMENTLINK": "/create/reply/comment/%s" % comment_id,
-        }
-
-        parent_dict[comment_id] = result_row[6]
-        chain_root_id = __find_comment_parent_helper(comment_id, parent_dict)
-        print(comment)
+    for comment in comments:
+        parent_dict[comment["COMMENT_ID"]] = comment["PARENT_COMMENT_ID"]
+        chain_root_id = __find_comment_parent_helper(comment["COMMENT_ID"], parent_dict)
+        #print(comment)
+        # if chain_root_id not in chain_dict:
+        #     chain_dict[chain_root_id] = len(comment_chains)
+        #     comment_chains.append([comment])
+        # else:
+        #     comment_chains[chain_dict[chain_root_id]].append(comment)
         if chain_root_id not in chain_dict:
             chain_dict[chain_root_id] = len(comment_chains)
-            comment_chains.append([comment])
+            comment_chains.append([comment, []])
         else:
-            comment_chains[chain_dict[chain_root_id]].append(comment)
+            comment_chains[chain_dict[chain_root_id]][1].append(comment)
     print(comment_chains)
     return comment_chains
+
+
+def __find_comment_parent_helper(cur_comment_id, parent_dict):
+    if parent_dict.get(cur_comment_id) is None:
+        return cur_comment_id
+    parent_dict[cur_comment_id] = __find_comment_parent_helper(parent_dict[cur_comment_id], parent_dict)#path compression
+    return parent_dict[cur_comment_id]
+
+def get_tweet_comment_chains(cursor, tweet_id):
+    comments = get_tweet_comments_unorganized(cursor, tweet_id)
+    return organizeCommentChains(comments)
+
+def get_comment_chain(cursor, tweet_id, comment_id):
+    comments = get_tweet_comments_unorganized(cursor, tweet_id)
+    chains = organizeCommentChains(comments)
+    for chain in chains:
+        if chain[0]["COMMENT_ID"] == comment_id:
+            return chain[1]
+    return [comment_id, []]
 
 
 def __find_comment_parent_helper(cur_comment_id, parent_dict):

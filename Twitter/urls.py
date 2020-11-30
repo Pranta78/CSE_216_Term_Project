@@ -56,7 +56,7 @@ urlpatterns = [
     url(r'^trends/$', trend),
     url(r'^create/tweet/', create_tweet),
     url(r'^create/reply/tweet/(?P<tweetID>[0-9]+)/$', create_reply_tweet),
-    url(r'^create/reply/comment/(?P<commentID>[0-9]+)/$', create_reply_comment),
+    url(r'^create/reply/comment/(?P<commentID>[0-9]+)/$', create_reply_comment, name='comment_reply_view'),
     url(r'^tweet/(?P<tweetID>[0-9]+)/$', detailed_tweet_view, name='detailedTweetView'),
     url(r'^decotest/$', deco_test),
     url(r'^notifications/mentions/$', mention_notifications_view, name='all_mention_notifications'),

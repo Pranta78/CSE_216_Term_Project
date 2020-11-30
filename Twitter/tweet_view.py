@@ -4,8 +4,8 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.core.files.storage import FileSystemStorage
 from .auth import auth_or_redirect, is_user_authenticated
-from .comment_view import __organizeCommentChains
-import re
+from .comment_view import get_tweet_comment_chains,get_comment_chain
+from .notification_view import insert_mention_notif_from_post_text
 
 
 @auth_or_redirect
@@ -37,6 +37,11 @@ def create_retweet(request, post_id):
             result = cursor.execute('''SELECT ACCOUNTNAME FROM ACCOUNT WHERE ID = %s''', [user_id]).fetchone()
             account_name = result[0]
 
+            context = {
+                "AUTHOR": account_name,
+                "USERLOGGEDIN": is_user_authenticated(request),
+            }
+
             result = cursor.execute('''
             SELECT
                 POST_ID, TIMESTAMP, TEXT, MEDIA,AUTHOR, PROFILE_PHOTO, TWEET_ID
@@ -46,32 +51,42 @@ def create_retweet(request, post_id):
                 POST_ID = %s  
             ''', [post_id]).fetchone()
 
-            if result is None:
-                result = cursor.execute('''
-                SELECT
-                    POST_ID, TIMESTAMP, TEXT, MEDIA,AUTHOR, PROFILE_PHOTO, COMMENT_ID
-                FROM 
-                    COMMENT_VIEW 
-                WHERE 
-                    POST_ID =  %s           
-                ''', [post_id]).fetchone()
-
-            if result is None:
-                return HttpResponse("invalid (account_name, post_ID, pm_notification_ID) for create retweet link")
-
-            context = {
-                "AUTHOR": account_name,
-                "POST": {
+            if result is not None:
+                context["POST"] = {
                     "AUTHOR": result[4],
                     "PROFILE_PHOTO": result[5],
                     "TEXT": result[2],
                     "MEDIA": result[3],
                     "TIMESTAMP": result[1],
                     "POST_ID": result[0],
-                    "COMMENTLINK": "#tweet-reply-box",
-                },
-                "USERLOGGEDIN": is_user_authenticated(request),
-            }
+                    "COMMENTLINK": reverse("detailedTweetView", kwargs={"tweetID": result[6]}) + "#tweet-reply-box",
+                    "COMMENTCHAINS": get_tweet_comment_chains(result[6])
+                }
+            else:
+                result = cursor.execute('''
+                                SELECT
+                                    POST_ID, TIMESTAMP, TEXT, MEDIA,AUTHOR, PROFILE_PHOTO, COMMENT_ID,PARENT_COMMENT_ID, "replied_to", TWEET_ID
+                                FROM 
+                                    COMMENT_VIEW 
+                                WHERE 
+                                    POST_ID =  %s           
+                                ''', [post_id]).fetchone()
+
+                if result is None:
+                    return HttpResponse("invalid (account_name, post_ID, pm_notification_ID) for create retweet link")
+                else:
+                    context["POST"] = {
+                        "AUTHOR": result[4],
+                        "PROFILE_PHOTO": result[5],
+                        "TEXT": result[2],
+                        "MEDIA": result[3],
+                        "TIMESTAMP": result[1],
+                        "POST_ID": result[0],
+                        "COMMENTLINK": reverse("comment_reply_view", kwargs={"commentID": result[6]}),
+                        "COMMENTCHAINS": get_comment_chain(result[6])
+                    }
+                    if result[7] is not None:
+                        context["POST"]["replied_to"] = result[8]
             return render(request, "CreateRetweetView.html", context)
 
     return HttpResponse("Invalid GET request on POST URL")
@@ -88,6 +103,9 @@ def detailed_retweet_view(request, account_name, post_id, pm_notification_id):
 #     t = '''SELECT *
 
     with connection.cursor() as cursor:
+        post = None
+        comment_chains = None
+        user_id = request.session['user_id']
         result = cursor.execute('''
         SELECT
             arp.ACCOUNT_ID, (SELECT PROFILE_PHOTO from ACCOUNT WHERE ID = arp.ACCOUNT_ID), arp.TIMESTAMP, arp.TEXT,
@@ -103,45 +121,65 @@ def detailed_retweet_view(request, account_name, post_id, pm_notification_id):
             tv.POST_ID = %s AND
             pmn.POST_MENTION_NOTIFICATION_ID = %s
         ''', [account_name, post_id, pm_notification_id]).fetchone()
+        if result is not None:
+            post = {
+                "AUTHOR": result[6],
+                "PROFILE_PHOTO": result[7],
+                "TEXT": result[8],
+                "MEDIA": result[9],
+                "TIMESTAMP": result[10],
+                "POST_ID": result[5],
+                "COMMENTLINK": "#tweet-reply-box",
+            }
+            comment_chains = get_tweet_comment_chains(cursor, result[4])
+            mark_comment_chain_like_bookmark(cursor,comment_chains,user_id)
 
-        if result is None:
-            cursor.execute('''
-            SELECT
-                arp.ACCOUNT_ID, (SELECT PROFILE_PHOTO from ACCOUNT WHERE ID = arp.ACCOUNT_ID), arp.TIMESTAMP, arp.TEXT,
-                cv.COMMENT_ID, cv.POST_ID, cv.AUTHOR, cv.PROFILE_PHOTO, cv.TEXT, cv.MEDIA, cv.TIMESTAMP
-            FROM
-                ACCOUNT_RETWEETS_POST arp
-            JOIN
-                POST_MENTION_NOTIFICATION pmn on(arp.PM_NOTIFICATION_ID = pmn.POST_MENTION_NOTIFICATION_ID)
-            JOIN
-                COMMENT_VIEW cv on(cv.POST_ID = pmn.MENTIONED_POST_ID)
-            WHERE
-                (SELECT ACCOUNTNAME from ACCOUNT WHERE ID = arp.ACCOUNT_ID) = %s AND
-                cv.POST_ID = %s AND
-                pmn.POST_MENTION_NOTIFICATION_ID = %s
-            ''', [account_name, post_id, pm_notification_id]).fetchone()
+        else:
+            result = cursor.execute('''
+                        SELECT
+                            arp.ACCOUNT_ID, (SELECT PROFILE_PHOTO from ACCOUNT WHERE ID = arp.ACCOUNT_ID), arp.TIMESTAMP, arp.TEXT,
+                            cv.COMMENT_ID, cv.POST_ID, cv.AUTHOR, cv.PROFILE_PHOTO, cv.TEXT, cv.MEDIA, cv.TIMESTAMP,
+                            cv.PARENT_COMMENT_ID, cv."replied_to", cv.TWEET_ID
+                        FROM
+                            ACCOUNT_RETWEETS_POST arp
+                        JOIN
+                            POST_MENTION_NOTIFICATION pmn on(arp.PM_NOTIFICATION_ID = pmn.POST_MENTION_NOTIFICATION_ID)
+                        JOIN
+                            COMMENT_VIEW cv on(cv.POST_ID = pmn.MENTIONED_POST_ID)
+                        WHERE
+                            (SELECT ACCOUNTNAME from ACCOUNT WHERE ID = arp.ACCOUNT_ID) = %s AND
+                            cv.POST_ID = %s AND
+                            pmn.POST_MENTION_NOTIFICATION_ID = %s
+                        ''', [account_name, post_id, pm_notification_id]).fetchone()
 
-        if result is None:
-            return HttpResponse("invalid (account_name, post_ID, pm_notification_ID) for retweet link")
-
-        context = {
-            "RT": {
-                "AUTHOR": account_name,
-                "AUTHOR_PROFILE_PHOTO": result[1],
-                "TIMESTAMP": result[2],
-                "TEXT": result[3],
-                "POST": {
+            if result is None:
+                return HttpResponse("invalid (account_name, post_ID, pm_notification_ID) for retweet link")
+            else:
+                post = {
                     "AUTHOR": result[6],
                     "PROFILE_PHOTO": result[7],
                     "TEXT": result[8],
                     "MEDIA": result[9],
                     "TIMESTAMP": result[10],
                     "POST_ID": result[5],
-                    "COMMENTLINK": "#tweet-reply-box",
+                    "COMMENTLINK": reverse("comment_reply_view", kwargs={"commentID": result[4]}),
                 }
+                if result[11] is not None:
+                    post["replied_to"] = result[12]
+                comment_chains = [get_comment_chain(cursor, result[13], result[4])]
+                mark_comment_chain_like_bookmark(comment_chains)
+
+                comment_chains[0][0] = None#root comment = this and it is already viewed as post
+        context = {
+            "RT": {
+                "AUTHOR": account_name,
+                "AUTHOR_PROFILE_PHOTO": result[1],
+                "TIMESTAMP": result[2],
+                "TEXT": result[3],
+                "POST": post
             },
             "USERLOGGEDIN": is_user_authenticated(request),
-            # "COMMENTCHAINS": comment_chains,
+            "COMMENTCHAINS": comment_chains,
         }
 
         return  render(request, "DetailedReTweetView.html", context)
@@ -183,36 +221,8 @@ def create_tweet(request):
 
                 print(f"tID{newTweetIdVar} pID{new_post_id_var} pm_notif_id{pm_notif_id_var}")
                 print(result)
-                if tweetBody:
-                    mentions = fetch_mentioned_users_from_post(tweetBody)
-                    print(f"mentions {mentions}")
-                    if mentions and len(mentions) > 0:
-                        for mention in mentions:
-                            #CHECK if user valid and no post_mention has already  been created for user for this post
-                            result = cursor.execute('''	
-                                                    SELECT ACCOUNTNAME
-                                                    FROM ACCOUNT a 
-                                                    WHERE a.ACCOUNTNAME = %s AND 
-                                                        (SELECT count(*)
-                                                        FROM POST_MENTIONS_ACCOUNT pma
-                                                        JOIN POST_MENTION_NOTIFICATION pmn ON(pmn.POST_MENTION_NOTIFICATION_ID = pma.PM_NOTIFICATION_ID)
-                                                        WHERE pma.ACCOUNT_ID = a.ID AND pmn.MENTIONED_POST_ID = %s) = 0
-                                                         ''', [mention, new_post_id_var]).fetchone()
-                            if result is None:
-                                cursor.execute('''
-                                                INSERT INTO 
-                                                    POST_MENTIONS_ACCOUNT 
-                                                VALUES(
-                                                   (SELECT ID  from ACCOUNT WHERE ACCOUNTNAME=:username), :pm_notif_id
-                                                   )''', {'username': mention, 'pm_notif_id': pm_notif_id_var})
-                                cursor.execute('''
-                                            INSERT INTO 
-                                                NOTIFICATION_NOTIFIES_ACCOUNT 
-                                            VALUES(
-                                               (SELECT ID  from ACCOUNT WHERE ACCOUNTNAME=:username), :base_notif_id, NULL 
-                                               )''',
-                                               {'username': mention, 'base_notif_id': base_notif_id_var, })
-                #todo implemnt in comment
+                insert_mention_notif_from_post_text(cursor, tweetBody, base_notif_id_var, pm_notif_id_var, new_post_id_var)
+
                 connection.commit()
                 return redirect(reverse('detailedTweetView', kwargs={"tweetID": result[4]}))
 
@@ -222,7 +232,6 @@ def save_post_media(media):
     fs = FileSystemStorage()
     media_name = fs.save(media.name, media)
     return fs.url(media_name)
-
 
 #no need for auth outside of ability to comment
 def detailed_tweet_view(request, tweetID):
@@ -238,37 +247,6 @@ def detailed_tweet_view(request, tweetID):
 
         #TODO fetch retweet, like, comment count
         if result is not None:
-            #TODO VIEWS to alleviate the suffering
-            cursor.execute( "SELECT a.id, a.ACCOUNTNAME, a.PROFILE_PHOTO, p.TEXT, p.MEDIA, p.TIMESTAMP, p.ID, c.COMMENT_ID, c.PARENT_COMMENT_ID, pa.ACCOUNTNAME "
-                            "FROM TWEET t "
-                            "JOIN TWEET_COMMENT c on (t.TWEET_ID = c.TWEET_ID)"
-                            "LEFT OUTER JOIN TWEET_COMMENT pc on (pc.COMMENT_ID = c.PARENT_COMMENT_ID)"
-                            "LEFT OUTER JOIN ACCOUNT_POSTS_POST papp on(papp.POST_ID = pc.POST_ID)"
-                            "LEFT OUTER JOIN ACCOUNT pa on(papp.ACCOUNT_ID = pa.ID)"
-                            "JOIN POST p on(c.POST_ID = p.ID)"
-                            "JOIN ACCOUNT_POSTS_POST app on(app.POST_ID = c.POST_ID)"
-                            "JOIN ACCOUNT a on (app.ACCOUNT_ID = a.ID)"
-                            "WHERE t.TWEET_ID = %s "
-                            "ORDER BY p.TIMESTAMP ", [tweetID])#orderby ensures that root of the chain is accessed first
-            comment_results = cursor.fetchall()
-            print(comment_results)
-            comment_chains = __organizeCommentChains(comment_results)
-            for comment_chain in comment_chains:
-                for comment in comment_chain:
-                    cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={comment['POST_ID']};")
-                    count = cursor.fetchone()[0]
-
-                    if int(count) == 1:
-                        comment["LIKED"] = True
-
-                    cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_BOOKMARKS_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={comment['POST_ID']};")
-                    count = cursor.fetchone()[0]
-
-                    if int(count) == 1:
-                        comment["BOOKMARKED"] = True
-
-            comment_chains.reverse()
-
             tweet = {
                 "AUTHOR": result[0],
                 "PROFILE_PHOTO": result[1],
@@ -276,21 +254,13 @@ def detailed_tweet_view(request, tweetID):
                 "MEDIA": result[3],
                 "TIMESTAMP": result[4],
                 "POST_ID": result[5],
-                "COMMENTLINK": "#tweet-reply-box",
-            }#your setup requires a separate tweet object
-            #would also be nice to set project rules for template context strings(i.e should they be full caps or not)
+                "COMMENTLINK": reverse("detailedTweetView", kwargs={"tweetID": tweetID}) + "#tweet-reply-box",
+            }
 
-            cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={result[5]};")
-            count = cursor.fetchone()[0]
+            comment_chains = get_tweet_comment_chains(cursor, tweetID)
+            mark_comment_chain_like_bookmark(cursor,comment_chains, user_id)
 
-            if int(count) == 1:
-                tweet["LIKED"] = True
-
-            cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_BOOKMARKS_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={result[5]};")
-            count = cursor.fetchone()[0]
-
-            if int(count) == 1:
-                tweet["BOOKMARKED"] = True
+            mark_post_like_bookmark(cursor, user_id, tweet)
 
             notification_count = cursor.callfunc("get_unseen_notif_count", int, [user_id])
 
@@ -307,7 +277,21 @@ def detailed_tweet_view(request, tweetID):
 
     return HttpResponse("TWEET DOES NOT EXIST")
 
+def mark_post_like_bookmark(cursor, user_id, post):
+    cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={post['POST_ID']};")
+    count = cursor.fetchone()[0]
 
-def fetch_mentioned_users_from_post(post_body):
-    regex = '@(\w+)'
-    return re.findall(regex, post_body)
+    if int(count) == 1:
+        post["LIKED"] = True
+
+    cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_BOOKMARKS_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={post['POST_ID']};")
+    count = cursor.fetchone()[0]
+
+    if int(count) == 1:
+        post["BOOKMARKED"] = True
+
+def mark_comment_chain_like_bookmark(cursor, comment_chains, userID):
+    for chain in comment_chains:
+        mark_post_like_bookmark(cursor, userID, chain[0])
+        for reply in chain[1]:
+            mark_post_like_bookmark(cursor, userID, reply)
