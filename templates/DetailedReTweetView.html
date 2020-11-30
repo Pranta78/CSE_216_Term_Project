@@ -10,24 +10,46 @@
                 </a> Retweeted
             </h5>
            <p class="card-text"><small class="text-muted">{{ RT.TIMESTAMP }}</small></p>
-             {% include "ModularPost.html" with post=RT.POST %}
+             <div id ="post">
+                 {% include "ModularPost.html" with post=RT.POST %}
+            </div>
          </div>
      </div>
 
     <!-- TODO make comments smaller??-->
 
-    <div class="container-fluid" id="comment">
-        {% for commentChain in COMMENTCHAINS %}
-            <div class="row">
-                <div class="col-8">
-                {% for comment in commentChain %}
-                    {% include "ModularRetweetCard.html"%}
-                {% endfor %}
+    <br><p class="h4"> Comments: </p> <br>
+    <div id="comment">
+     {% for commentChain in COMMENTCHAINS %}
+            {% if commentChain.1 %}
+                <div class="row">
+                    <div class="col-8">
+                        <div class="card mx-1 py-2 ">
+                        {% include "ModularPost.html" with post=commentChain.0 %}
+                            <div class="card-body ml-3 mr-0 pr-2">
+                                {% for comment in commentChain.1 %}
+                                    {% include "ModularPost.html" with post=comment %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            {% else %}
+                <div class="row">
+                    <div class="col-8 px-1">
+                    {% include "ModularPost.html" with post=commentChain.0 %}
+                    <div>
+               <div>
+            {% endif %}
+{#            <div class="row">#}
+{#                <div class="col-8">#}
+{#                {% for comment in commentChain %}#}
+{#                    {% include "ModularPost.html" with post=comment %}#}
+{#                {% endfor %}#}
+{#                </div>#}
+{#            </div>#}
         {% endfor %}
     </div>
-
     <!--TODO make this fixed to the bottom of the screen so that user doesn't have to scroll -->
     {% if USERLOGGEDIN %}
         <a id ="tweet-reply-box">
@@ -88,9 +110,8 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
     {% endblock %}
 
-    {% include 'ajax_like_bookmark.html' with div_id="tweet" only %}
+    {% include 'ajax_like_bookmark.html' with div_id="post" only %}
     {% include 'ajax_like_bookmark.html' with div_id="comment" only %}
-
     {% endif %}
 
 {% endblock %}

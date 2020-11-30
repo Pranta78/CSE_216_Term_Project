@@ -9,20 +9,23 @@
                 <i class="fa fa-retweet fa-lg"></i>Retweet
             </h5>
              <br><br>
+             <div id = "post">
              {% include "ModularPost.html" with post=POST %}
+             </div>
              <form enctype="multipart/form-data" action = "/create/retweet/{{ POST.POST_ID }}/"method="POST"> {% csrf_token %}
-                <div class="card">
-                   <textarea class="form-control" placeholder="Say something?" name = "TEXT" id="retweet_text" ></textarea>
-                </div>
-                <br>
                  <button type="submit" class="btn btn-primary"><i class="fa fa-retweet fa-lg"></i> Retweet</button>
             </form>
          </div>
      </div>
 
-
     {% for reply in replies %}
         {% include "ModularPost.html" with post=reply %}
     {% endfor %}
+
+    {% block javascript %}
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    {% endblock %}
+
+        {% include 'ajax_like_bookmark.html' with div_id="post" only %}
 
 {% endblock %}

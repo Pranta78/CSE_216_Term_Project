@@ -272,8 +272,14 @@ def like_bookmark_handler(request):
                     data['bookmark'] = 'unbookmark'
 
                 else:
-                    cursor.execute(f"INSERT INTO ACCOUNT_BOOKMARKS_POST VALUES({user_id}, {post_id});")
-                    connection.commit()
+
+                    cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_BOOKMARKS_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={post_id};")
+                    count = cursor.fetchone()[0]
+
+                    if int(count) == 0:
+                        cursor.execute(f"INSERT INTO ACCOUNT_BOOKMARKS_POST VALUES({user_id}, {post_id});")
+                        connection.commit()
+
                     data['bookmark'] = 'bookmark'
 
             return JsonResponse(data)

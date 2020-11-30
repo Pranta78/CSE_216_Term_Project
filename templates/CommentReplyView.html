@@ -2,7 +2,7 @@
 <!--the modular post html should not concern itself with showing comments -->
 {% block skeleton_content %}
     <div class="row">
-        <div class="col-8" id="comment">
+        <div class="col-8" id="post">
             {% include "ModularPost.html" with post=comment %}
         </div>
     </div>
@@ -45,9 +45,12 @@
                 <img class="img-fluid" style="display: none;" id="media_preview">
             </div>
         </form>
+
+        <div id="comment">
         {% for reply in replies %}
             {% include "ModularPost.html" with post=reply %}
         {% endfor %}
+        </div>
 
         <script>
         document.getElementById("upload").onchange = function () {
@@ -72,5 +75,6 @@
     {% endblock %}
 
     {% include 'ajax_like_bookmark.html' with div_id="comment" only %}
+    {% include 'ajax_like_bookmark.html' with div_id="post" only %}
 
 {% endblock %}

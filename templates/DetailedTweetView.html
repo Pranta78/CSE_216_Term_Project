@@ -9,13 +9,14 @@
                 {% include "ModularPost.html" with post=tweet %}
             </div>
         </div>
+       <p class="h4"> Comments: </p> <br>
         {% for commentChain in COMMENTCHAINS %}
             {% if commentChain.1 %}
                 <div class="row">
                     <div class="col-8">
-                        <div class="card mx-1 py-2">
+                        <div class="card mx-1 py-2 ">
                         {% include "ModularPost.html" with post=commentChain.0 %}
-                            <div class="card-body ml-50">
+                            <div class="card-body ml-3 mr-0 pr-2">
                                 {% for comment in commentChain.1 %}
                                     {% include "ModularPost.html" with post=comment %}
                                 {% endfor %}
@@ -24,7 +25,11 @@
                     </div>
                 </div>
             {% else %}
-                {% include "ModularPost.html" with post=commentChain.0 %}
+                <div class="row">
+                    <div class="col-8 px-1">
+                    {% include "ModularPost.html" with post=commentChain.0 %}
+                    <div>
+               <div>
             {% endif %}
 {#            <div class="row">#}
 {#                <div class="col-8">#}

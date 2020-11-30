@@ -13,7 +13,7 @@ def create_retweet(request, post_id):
     #TODO do sanity check that post_id is valid
     user_id = request.session['user_id']
     if request.POST:
-        text = request.POST["TEXT"]
+        text = ""
         if user_id and post_id:
             with connection.cursor() as cursor:
                 msg = ''
@@ -22,7 +22,7 @@ def create_retweet(request, post_id):
                 result = cursor.callproc("RETWEET_POST", [text,  post_id, user_id, retweeted_author_id, pm_notification_id])
                 retweeted_author_id = result[3]
                 pm_notification_id = result[4]
-                retweeted_author_name = cursor.execute('''SELECT ACCOUNTNAME FROM ACCOUNT WHERE ID = %s;''', [retweeted_author_id]).fetchone()
+                retweeted_author_name = cursor.execute('''SELECT ACCOUNTNAME FROM ACCOUNT WHERE ID = %s;''', [retweeted_author_id]).fetchone()[0]
 
                 connection.commit()
                 return redirect(reverse('detailed_retweet_view', kwargs={
@@ -52,6 +52,8 @@ def create_retweet(request, post_id):
             ''', [post_id]).fetchone()
 
             if result is not None:
+                comment_chains = get_tweet_comment_chains(cursor, result[6])
+                mark_comment_chain_like_bookmark(cursor, comment_chains, user_id)
                 context["POST"] = {
                     "AUTHOR": result[4],
                     "PROFILE_PHOTO": result[5],
@@ -60,8 +62,9 @@ def create_retweet(request, post_id):
                     "TIMESTAMP": result[1],
                     "POST_ID": result[0],
                     "COMMENTLINK": reverse("detailedTweetView", kwargs={"tweetID": result[6]}) + "#tweet-reply-box",
-                    "COMMENTCHAINS": get_tweet_comment_chains(result[6])
+                    "COMMENTCHAINS": comment_chains
                 }
+                mark_post_like_bookmark(cursor, user_id, context["POST"])
             else:
                 result = cursor.execute('''
                                 SELECT
@@ -75,18 +78,28 @@ def create_retweet(request, post_id):
                 if result is None:
                     return HttpResponse("invalid (account_name, post_ID, pm_notification_ID) for create retweet link")
                 else:
-                    context["POST"] = {
+                    comment = {
                         "AUTHOR": result[4],
                         "PROFILE_PHOTO": result[5],
                         "TEXT": result[2],
                         "MEDIA": result[3],
                         "TIMESTAMP": result[1],
                         "POST_ID": result[0],
+                        "COMMENT_ID": result[6],
                         "COMMENTLINK": reverse("comment_reply_view", kwargs={"commentID": result[6]}),
-                        "COMMENTCHAINS": get_comment_chain(result[6])
                     }
+                    comment_chains = get_comment_chain(cursor, result[9], comment)
+                    mark_comment_chain_like_bookmark(cursor, comment_chains, user_id)
+                    comment["COMMENTCHAINS"] = comment_chains
+                    if len(comment_chains) > 0:
+                        comment_chains[0][0] = None  # root comment = this and it is already viewed as post
+
+
+                    context["POST"] = comment
                     if result[7] is not None:
                         context["POST"]["replied_to"] = result[8]
+                    mark_post_like_bookmark(cursor, user_id, context["POST"])
+
             return render(request, "CreateRetweetView.html", context)
 
     return HttpResponse("Invalid GET request on POST URL")
@@ -129,11 +142,11 @@ def detailed_retweet_view(request, account_name, post_id, pm_notification_id):
                 "MEDIA": result[9],
                 "TIMESTAMP": result[10],
                 "POST_ID": result[5],
-                "COMMENTLINK": "#tweet-reply-box",
+                "COMMENTLINK":  reverse("detailedTweetView", kwargs={"tweetID": result[4]}) + "#tweet-reply-box",
             }
             comment_chains = get_tweet_comment_chains(cursor, result[4])
             mark_comment_chain_like_bookmark(cursor,comment_chains,user_id)
-
+            mark_post_like_bookmark(cursor, user_id,post)
         else:
             result = cursor.execute('''
                         SELECT
@@ -162,14 +175,16 @@ def detailed_retweet_view(request, account_name, post_id, pm_notification_id):
                     "MEDIA": result[9],
                     "TIMESTAMP": result[10],
                     "POST_ID": result[5],
+                    "COMMENT_ID": result[4],
                     "COMMENTLINK": reverse("comment_reply_view", kwargs={"commentID": result[4]}),
                 }
                 if result[11] is not None:
                     post["replied_to"] = result[12]
-                comment_chains = [get_comment_chain(cursor, result[13], result[4])]
+                comment_chains = get_comment_chain(cursor, result[13], post)
                 mark_comment_chain_like_bookmark(comment_chains)
-
-                comment_chains[0][0] = None#root comment = this and it is already viewed as post
+                mark_post_like_bookmark(cursor, user_id, post)
+                if len(comment_chains) > 0:
+                    comment_chains[0][0] = None#root comment = this and it is already viewed as post
         context = {
             "RT": {
                 "AUTHOR": account_name,
@@ -183,7 +198,7 @@ def detailed_retweet_view(request, account_name, post_id, pm_notification_id):
         }
 
         return  render(request, "DetailedReTweetView.html", context)
-    return HttpResponse("Server connectio fail")
+    return HttpResponse("Server connection fail")
 
 @auth_or_redirect
 def create_tweet(request):
@@ -292,6 +307,7 @@ def mark_post_like_bookmark(cursor, user_id, post):
 
 def mark_comment_chain_like_bookmark(cursor, comment_chains, userID):
     for chain in comment_chains:
+        print(f"cch {chain[0]}")
         mark_post_like_bookmark(cursor, userID, chain[0])
         for reply in chain[1]:
             mark_post_like_bookmark(cursor, userID, reply)

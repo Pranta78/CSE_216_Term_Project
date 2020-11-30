@@ -224,13 +224,13 @@ def get_tweet_comment_chains(cursor, tweet_id):
     comments = get_tweet_comments_unorganized(cursor, tweet_id)
     return organizeCommentChains(comments)
 
-def get_comment_chain(cursor, tweet_id, comment_id):
+def get_comment_chain(cursor, tweet_id, comment):
     comments = get_tweet_comments_unorganized(cursor, tweet_id)
     chains = organizeCommentChains(comments)
     for chain in chains:
-        if chain[0]["COMMENT_ID"] == comment_id:
+        if chain[0]["COMMENT_ID"] == comment["COMMENT_ID"]:
             return chain[1]
-    return [comment_id, []]
+    return [[comment, []]]
 
 
 def __find_comment_parent_helper(cur_comment_id, parent_dict):
