@@ -144,14 +144,18 @@ def create_comment(request, tweetID, parentCommentID):
                     result = cursor.callproc("CREATE_ROOT_COMMENT",
                                              [user_id, tweetID, commentBody, media, allowed_accounts,
                                               newCommentID, new_notif_id, new_pm_notif_id, new_post_id])
+                    new_commentID = result[5]
+                    new_notif_id = result[6]
+                    new_pm_notif_id = result[7]
+                    new_post_id = result[8]
                 else:
                     result = cursor.callproc("CREATE_COMMENT",
                                          [user_id, tweetID, parentCommentID, commentBody, media, allowed_accounts,
                                           newCommentID, new_notif_id, new_pm_notif_id, new_post_id])
-                new_commentID = result[5]
-                new_notif_id = result[6]
-                new_pm_notif_id = result[7]
-                new_post_id = result[8]
+                    new_commentID = result[6]
+                    new_notif_id = result[7]
+                    new_pm_notif_id = result[8]
+                    new_post_id = result[9]
 
                 insert_mention_notif_from_post_text(cursor, commentBody, new_notif_id, new_pm_notif_id, new_post_id)
 

@@ -223,10 +223,10 @@ def get_mention_notifs(user_id):
                                                     pma.ACCOUNT_ID = %s 
                                             ) 
                                             LEFT JOIN TWEET_VIEW tv on(
-                                                tv.ACCOUNT_ID = pma.ACCOUNT_ID AND tv.POST_ID = pmn.MENTIONED_POST_ID
+                                                tv.POST_ID = pmn.MENTIONED_POST_ID
                                             )
                                             LEFT JOIN COMMENT_VIEW cv on(
-                                                cv.ACCOUNT_ID = pma.ACCOUNT_ID AND cv.POST_ID = pmn.MENTIONED_POST_ID
+                                                cv.POST_ID = pmn.MENTIONED_POST_ID
                                             )
                                         ORDER BY 
                                             n.TIMESTAMP DESC ''', [user_id]).fetchall()
@@ -325,7 +325,7 @@ def insert_mention_notif_from_post_text(cursor, post_text, base_notif_id, pm_not
                                             JOIN POST_MENTION_NOTIFICATION pmn ON(pmn.POST_MENTION_NOTIFICATION_ID = pma.PM_NOTIFICATION_ID)
                                             WHERE pma.ACCOUNT_ID = a.ID AND pmn.MENTIONED_POST_ID = %s) = 0
                                              ''', [mention, post_id]).fetchone()
-                if result is None:
+                if result is not None:
                     cursor.execute('''
                                     INSERT INTO 
                                         POST_MENTIONS_ACCOUNT 
@@ -339,5 +339,6 @@ def insert_mention_notif_from_post_text(cursor, post_text, base_notif_id, pm_not
                                    (SELECT ID  from ACCOUNT WHERE ACCOUNTNAME=:username), :base_notif_id, NULL 
                                    )''',
                                    {'username': mention, 'base_notif_id': base_notif_id, })
-
+                else:
+                    print(f"{mention} mention skip { base_notif_id}  {pm_notif_id} {post_id}")
 
