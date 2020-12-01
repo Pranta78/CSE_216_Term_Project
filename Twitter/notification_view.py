@@ -12,6 +12,7 @@ def notifications_all_view(request):
         notifications = get_follow_notifs(user_id)
         notifications.extend(get_mention_notifs(user_id))
         notifications.extend(get_retweet_notifs(user_id))
+        notifications.extend(get_like_notifs(user_id))
         notifications.sort(key=lambda x: x["TIMESTAMP"], reverse=True)
 
         unseen_notification_count = cursor.callfunc("get_unseen_notif_count", int, [user_id])
@@ -56,22 +57,6 @@ def handle_notif_click(request):
         return redirect("INVALID GET REQUEST ON POST URL.")
 
 
-@auth_or_redirect
-def mention_notifications_view(request):
-    user_id = request.session.get("user_id", None)
-    with connection.cursor() as cursor:
-        notifications = get_mention_notifs(user_id)
-        unseen_notification_count = cursor.callfunc("get_unseen_notif_count", int, [user_id])
-        context = {
-            "notification_count": unseen_notification_count,
-            "NOTIFICATIONS": notifications,
-            "mentions_active": True,
-        }
-        return render(request, "NotificationView.html", context)
-
-    return HttpResponse("notifERROR")
-
-
 def get_follow_notifs(user_id):
     follow_notifications = []
     with connection.cursor() as cursor:
@@ -99,6 +84,80 @@ def get_follow_notifs(user_id):
                 )
 
     return follow_notifications
+
+
+@auth_or_redirect
+def mention_notifications_view(request):
+    user_id = request.session.get("user_id", None)
+    with connection.cursor() as cursor:
+        notifications = get_mention_notifs(user_id)
+        unseen_notification_count = cursor.callfunc("get_unseen_notif_count", int, [user_id])
+        context = {
+            "notification_count": unseen_notification_count,
+            "NOTIFICATIONS": notifications,
+            "mentions_active": True,
+        }
+        return render(request, "NotificationView.html", context)
+
+    return HttpResponse("notifERROR")
+
+
+
+def get_like_notifs(user_id):
+    like_notifications = []
+    with connection.cursor() as cursor:
+        results_rows = cursor.execute('''
+                                    SELECT  
+                                        n.ID, n.TIMESTAMP, nna.SEEN, pmn.MENTIONED_POST_ID,
+                                        tv.TWEET_ID, cv.COMMENT_ID, ra.ACCOUNTNAME, pmn.POST_MENTION_NOTIFICATION_ID
+                                    FROM 
+                                        ACCOUNT_POSTS_POST app 
+                                        JOIN POST_MENTION_NOTIFICATION pmn on(
+                                                pmn.MENTIONED_POST_ID = app.POST_ID
+                                        ) 
+                                        JOIN NOTIFICATION n on(
+                                                n.ID = pmn.NOTIFICATION_BASE_ID 
+                                        )
+                                        JOIN NOTIFICATION_NOTIFIES_ACCOUNT nna on(
+                                                nna.NOTIFICATION_ID = n.ID AND
+                                                nna.ACCOUNT_ID = app.ACCOUNT_ID
+                                        ) 
+                                        JOIN ACCOUNT_LIKES_POST alp on( 
+                                                alp.PM_NOTIFICATION_ID = pmn.POST_MENTION_NOTIFICATION_ID AND
+                                                alp.POST_ID = app.POST_ID
+                                        )
+                                        JOIN ACCOUNT ra on(
+                                                ra.ID = alp.ACCOUNT_ID
+                                        ) 
+                                        LEFT OUTER JOIN TWEET_VIEW tv on(
+                                            tv.POST_ID = app.post_ID 
+                                        )
+                                        LEFT OUTER JOIN COMMENT_VIEW cv on(
+                                           cv.POST_ID = app.post_ID 
+                                        )
+                                    WHERE 
+                                        app.ACCOUNT_ID =  %s''', [user_id]).fetchall()
+        if results_rows is not None:
+            for result_row in results_rows:
+                n = {
+                    "NOTIFICATION_ID": result_row[0],
+                    "TIMESTAMP": result_row[1],
+                    "SEEN": result_row[2],
+                    }
+                if result_row[4] is not None:
+                    n["NOTIFICATION_TEXT"] = f"You tweet was liked by {result_row[6]} ."
+                    n["NOTIFICATION_LINK"]= reverse("detailedTweetView", kwargs={
+                         "tweetID": result_row[4]
+                     })
+                elif result_row[5] is not None:
+                    n["NOTIFICATION_TEXT"] = f"Your comment was liked by {result_row[6]} ."
+                    n["NOTIFICATION_LINK"] = reverse("comment_reply_view", kwargs={
+                        "commentID": result_row[5]
+                    })
+
+                like_notifications.append(n)
+
+    return like_notifications
 
 
 def get_mention_notifs(user_id):
@@ -143,7 +202,7 @@ def get_mention_notifs(user_id):
 
 
 def get_retweet_notifs(user_id):
-    rt_notifications = []
+    rt_notifications = [] #TODO FIX RETWEET query
     with connection.cursor() as cursor:
         results_rows = cursor.execute('''
                                         SELECT  
@@ -162,9 +221,7 @@ def get_retweet_notifs(user_id):
                                                 nna.ACCOUNT_ID = app.ACCOUNT_ID
                                             ) 
                                             JOIN ACCOUNT_RETWEETS_POST arp on( 
-                                                arp.PM_NOTIFICATION_ID = pmn.POST_MENTION_NOTIFICATION_ID AND
-                                                arp.POST_ID = app.POST_ID AND
-                                                arp.ACCOUNT_ID = app.ACCOUNT_ID
+                                                arp.POST_ID = app.POST_ID
                                             )
                                             JOIN ACCOUNT ra on(
                                                 ra.ID = arp.ACCOUNT_ID

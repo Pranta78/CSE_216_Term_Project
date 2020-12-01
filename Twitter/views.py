@@ -220,6 +220,11 @@ def like_bookmark_handler(request):
                 # if liked, then unlike, if not liked, then add to like list
                 if like == 'like':
                     #unlike the else branch, this can always be executed as deleting is safe
+                    cursor.execute(f'''
+                                    DELETE FROM POST_MENTION_NOTIFICATION WHERE POST_MENTION_NOTIFICATION_ID = (
+                                        SELECT PM_NOTIFICATION_ID FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={post_id} 
+                                    )
+                                    ''')
                     cursor.execute(f"DELETE FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={post_id};")
                     connection.commit()
                     data['like'] = 'unlike'
@@ -232,7 +237,8 @@ def like_bookmark_handler(request):
                     count = cursor.fetchone()[0]
 
                     if int(count) == 0:
-                        cursor.execute(f"INSERT INTO ACCOUNT_LIKES_POST VALUES({user_id}, {post_id});")
+                        #cursor.execute(f"INSERT INTO ACCOUNT_LIKES_POST VALUES({user_id}, {post_id});")
+                        cursor.callproc("INSERT_LIKE_AND_NOTIF", [user_id, post_id])
                         connection.commit()
 
                     data['like'] = 'like'
