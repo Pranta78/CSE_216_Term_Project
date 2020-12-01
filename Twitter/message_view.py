@@ -4,6 +4,8 @@ from django.shortcuts import render, redirect
 from .auth import auth_or_redirect
 from django.urls import reverse
 
+from .notification_view import get_unseen_notif_count
+
 
 @auth_or_redirect
 def message(request):
@@ -46,6 +48,7 @@ def message(request):
     context = {"user_id": user_id,
                "username": username,
                "receiver_data": receiver_data,
+               "notification_count": get_unseen_notif_count(user_id),
                "messages_is_active": True}
 
     template_name = "message.html"
@@ -138,6 +141,7 @@ def inbox(request, receiver):
                "username": username,
                "receiver": receiver,
                "messagelist": messagelist,
+               "notification_count": get_unseen_notif_count(user_id),
                "messages_is_active": True}
 
     template_name = "inbox.html"

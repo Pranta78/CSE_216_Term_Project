@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.core.files.storage import FileSystemStorage
 from .auth import auth_or_redirect, is_user_authenticated
 from .comment_view import get_tweet_comment_chains,get_comment_chain
-from .notification_view import insert_mention_notif_from_post_text
+from .notification_view import insert_mention_notif_from_post_text, get_unseen_notif_count
 
 
 @auth_or_redirect
@@ -40,6 +40,7 @@ def create_retweet(request, post_id):
             context = {
                 "AUTHOR": account_name,
                 "USERLOGGEDIN": is_user_authenticated(request),
+                "notification_count": get_unseen_notif_count(user_id),
             }
 
             result = cursor.execute('''
@@ -193,6 +194,7 @@ def detailed_retweet_view(request, account_name, post_id, pm_notification_id):
                 "TEXT": result[3],
                 "POST": post
             },
+            "notification_count": get_unseen_notif_count(user_id),
             "USERLOGGEDIN": is_user_authenticated(request),
             "COMMENTCHAINS": comment_chains,
         }

@@ -9,10 +9,13 @@
 {#                {% include 'profile_navigator.html' with profile_name=profile_name %}#}
 
             <div class="row" align="center" id="nav_content">
-                <div class="col-10">
+                <div class="col-12">
                    <nav class="nav nav nav-pills nav-justified">
                       <a class="nav-item nav-link {% if all_notifs_active %}active{% endif %}" href="{% url 'all_notifications'  %}">All Notifications</a>
                       <a class="nav-item nav-link {% if mentions_active %}active{% endif %}" href="{% url 'all_mention_notifications'  %}">Mentions</a>
+                       <a class="nav-item nav-link {% if retweets_active %}active{% endif %}" href="{% url 'all_retweet_notifications'  %}">Retweets</a>
+                       <a class="nav-item nav-link {% if likes_active %}active{% endif %}" href="{% url 'all_like_notifications'  %}">Likes</a>
+                       <a class="nav-item nav-link {% if follows_active %}active{% endif %}" href="{% url 'all_follow_notifications'  %}">Follows</a>
                    </nav>
                 </div>
             </div>

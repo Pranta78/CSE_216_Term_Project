@@ -1,8 +1,10 @@
 from django.http import HttpResponse
 from django.db import connection
 from django.shortcuts import render, redirect
-from .auth import auth_or_redirect
+from .auth import auth_or_redirect, is_user_authenticated
 from django.urls import reverse
+
+from .notification_view import get_unseen_notif_count
 
 
 @auth_or_redirect
@@ -102,6 +104,7 @@ def profile_edit(request):
                'profile_photo': profile_photo,
                'header_photo': header_photo,
                "profile_is_active": True,
+               "notification_count": get_unseen_notif_count(user_id),
                "message": message}
 
     return render(request, template_name, context)
@@ -198,6 +201,7 @@ def populateProfile(profilename, username, user_id):
                'self_profile': self_profile,
                "profile_is_active": True,
                "follower_count": follower_count,
+               "notification_count": get_unseen_notif_count(user_id),
                "following_count": following_count}
 
     return context
@@ -585,6 +589,9 @@ def follower(request, profilename):
                'user': profilename,
                'profilelist': dict}
 
+    if is_user_authenticated(request):
+        context["notification_count"] = get_unseen_notif_count(request.session.get("user_id"))
+
     return render(request, template_name, context)
 
 
@@ -608,6 +615,9 @@ def following(request, profilename):
     template_name = "follower_following_list.html"
     context = {'user': profilename,
                'profilelist': dict}
+
+    if is_user_authenticated(request):
+        context["notification_count"] = get_unseen_notif_count(request.session.get("user_id"))
 
     return render(request, template_name, context)
 

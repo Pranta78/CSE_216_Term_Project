@@ -31,7 +31,9 @@ from .trends_view import show_hashtag, trend
 from .tweet_view import detailed_tweet_view, create_tweet, detailed_retweet_view, create_retweet
 from .comment_view import create_reply_tweet, create_reply_comment
 from .auth import deco_test
-from .notification_view import notifications_all_view,mention_notifications_view, handle_notif_click
+from .notification_view import (notifications_all_view, mention_notifications_view,
+                                follow_notifications_view,retweet_notifications_view,
+                                like_notifications_view, handle_notif_click)
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
@@ -60,6 +62,9 @@ urlpatterns = [
     url(r'^tweet/(?P<tweetID>[0-9]+)/$', detailed_tweet_view, name='detailedTweetView'),
     url(r'^decotest/$', deco_test),
     url(r'^notifications/mentions/$', mention_notifications_view, name='all_mention_notifications'),
+    url(r'^notifications/likes/$', like_notifications_view, name='all_like_notifications'),
+    url(r'^notifications/retweets/$', retweet_notifications_view, name='all_retweet_notifications'),
+    url(r'^notifications/following/$', follow_notifications_view, name='all_follow_notifications'),
     url(r'^notifications/$', notifications_all_view, name='all_notifications'),
     url(r'^see/notification/$', handle_notif_click, name='handle_notification_click'),
     url(r'^search/$', search),

@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 
 from .auth import auth_or_redirect, is_user_authenticated
+from .notification_view import get_unseen_notif_count
 
 
 @auth_or_redirect
@@ -27,6 +28,7 @@ def trend(request):
     template_name = "trend.html"
     context = {
         "hashtag_list": hashtag_list,
+        "notification_count": get_unseen_notif_count(user_id),
         "trends_is_active": True
     }
 
@@ -110,6 +112,7 @@ def show_hashtag(request, hashtag):
     template_name = "hashtag.html"
     context = {"post_list": post_list,
                "hashtag": hashtag,
+               "notification_count": get_unseen_notif_count(user_id),
                "trends_is_active": True}
 
     return render(request, template_name, context)

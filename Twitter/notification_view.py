@@ -101,7 +101,56 @@ def mention_notifications_view(request):
 
     return HttpResponse("notifERROR")
 
+@auth_or_redirect
+def retweet_notifications_view(request):
+    user_id = request.session.get("user_id", None)
+    with connection.cursor() as cursor:
+        notifications = get_retweet_notifs(user_id)
+        unseen_notification_count = cursor.callfunc("get_unseen_notif_count", int, [user_id])
+        context = {
+            "notification_count": unseen_notification_count,
+            "NOTIFICATIONS": notifications,
+            "retweets_active": True,
+        }
+        return render(request, "NotificationView.html", context)
 
+    return HttpResponse("notifERROR")
+
+
+@auth_or_redirect
+def like_notifications_view(request):
+    user_id = request.session.get("user_id", None)
+    with connection.cursor() as cursor:
+        notifications = get_like_notifs(user_id)
+        unseen_notification_count = cursor.callfunc("get_unseen_notif_count", int, [user_id])
+        context = {
+            "notification_count": unseen_notification_count,
+            "NOTIFICATIONS": notifications,
+            "likes_active": True,
+        }
+        return render(request, "NotificationView.html", context)
+
+    return HttpResponse("notifERROR")
+
+
+@auth_or_redirect
+def follow_notifications_view(request):
+    user_id = request.session.get("user_id", None)
+    with connection.cursor() as cursor:
+        notifications = get_follow_notifs(user_id)
+        context = {
+            "notification_count": get_unseen_notif_count(user_id),
+            "NOTIFICATIONS": notifications,
+            "follows_active": True,
+        }
+        return render(request, "NotificationView.html", context)
+
+    return HttpResponse("notifERROR")
+
+
+def get_unseen_notif_count(user_id):
+    with connection.cursor() as cursor:
+        return cursor.callfunc("get_unseen_notif_count", int, [user_id])
 
 def get_like_notifs(user_id):
     like_notifications = []
@@ -221,6 +270,7 @@ def get_retweet_notifs(user_id):
                                                 nna.ACCOUNT_ID = app.ACCOUNT_ID
                                             ) 
                                             JOIN ACCOUNT_RETWEETS_POST arp on( 
+                                                arp.PM_NOTIFICATION_ID = pmn.POST_MENTION_NOTIFICATION_ID AND
                                                 arp.POST_ID = app.POST_ID
                                             )
                                             JOIN ACCOUNT ra on(

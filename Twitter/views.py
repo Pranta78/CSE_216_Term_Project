@@ -4,6 +4,8 @@ from django.shortcuts import render, redirect
 from .auth import auth_or_redirect
 from django.urls import reverse
 
+from .notification_view import get_unseen_notif_count
+
 
 def create_account(request):
     message = ''
@@ -188,6 +190,7 @@ def bookmark(request):
     template_name = "bookmark.html"
     context = {"post_list": post_list,
                "profile_name": username,
+               "notification_count": get_unseen_notif_count(user_id),
                "bookmark_is_active": True}
 
     print("Printing overall context! ")
@@ -333,7 +336,8 @@ def search(request):
     context = {
         'search_is_active': True,
         'post_list': post_list,
-        'search_word': searchWord
+        'search_word': searchWord,
+        "notification_count": get_unseen_notif_count(user_id),
     }
 
     return render(request, template_name, context)
