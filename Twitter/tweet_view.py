@@ -22,7 +22,7 @@ def create_retweet(request, post_id):
                 result = cursor.callproc("RETWEET_POST", [text,  post_id, user_id, retweeted_author_id, pm_notification_id])
                 retweeted_author_id = result[3]
                 pm_notification_id = result[4]
-                retweeted_author_name = cursor.execute('''SELECT ACCOUNTNAME FROM ACCOUNT WHERE ID = %s;''', [retweeted_author_id]).fetchone()[0]
+                retweeted_author_name = cursor.execute('''SELECT ACCOUNTNAME FROM ACCOUNT WHERE ID = %s;''', [user_id]).fetchone()[0]
 
                 connection.commit()
                 return redirect(reverse('detailed_retweet_view', kwargs={

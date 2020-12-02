@@ -185,7 +185,9 @@ def get_like_notifs(user_id):
                                            cv.POST_ID = app.post_ID 
                                         )
                                     WHERE 
-                                        app.ACCOUNT_ID =  %s''', [user_id]).fetchall()
+                                        app.ACCOUNT_ID =  %s
+                                    ORDER BY 
+                                        n.TIMESTAMP DESC''', [user_id]).fetchall()
         if results_rows is not None:
             for result_row in results_rows:
                 n = {
@@ -283,7 +285,9 @@ def get_retweet_notifs(user_id):
                                                 cv.POST_ID = app.post_ID 
                                             )
                                         WHERE 
-                                            app.ACCOUNT_ID =  %s''', [user_id]).fetchall()
+                                            app.ACCOUNT_ID =  %s
+                                        ORDER BY 
+                                            n.TIMESTAMP DESC''', [user_id]).fetchall()
         if results_rows is not None:
             for result_row in results_rows:
                 n = {
