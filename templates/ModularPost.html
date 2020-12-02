@@ -11,13 +11,27 @@
 
         <img src="{{ post.PROFILE_PHOTO|default:"/media/default_profile.png" }}"  width="50px" height="50px" style="border-radius: 50%; border: 1px solid #777777;">
 
-        <h5 class="card-title" style="display: inline;">{{ post.AUTHOR }}
+
+        <h5 class="card-title col-8" style="display: inline;">{{ post.AUTHOR }}
             <small>
                 <a href="{% url 'user_profile' post.AUTHOR %}">
                     @{{ post.AUTHOR  }}
                 </a>
             </small>
+
         </h5>
+
+        <block class="dropdown inline">
+            <button class="btn float-right dropdown-toggle"  type="button"  id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="fa fa-ellipsis-h"></i>
+            </button>
+
+          <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+              <form method="POST" action={% url "delete_post"  post.POST_ID%}>{% csrf_token %}
+                  <button type="submit" class="dropdown-item text-danger ">Delete Post</button>
+            </form>
+          </div>
+        </block>
         <p class="card-text"><small class="text-muted">{{ post.TIMESTAMP }}</small></p>
 
         {% if post.replied_to %}

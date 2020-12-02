@@ -245,6 +245,29 @@ def create_tweet(request):
 
         return HttpResponse("something went wrong during tweet submission")
 
+
+@auth_or_redirect
+def delete_post(request, post_id):
+    user_id = request.session['user_id']
+    if request.POST:
+        with connection.cursor() as cursor:
+            result = cursor.execute('''
+                SELECT ACCOUNT_ID 
+                FROM ACCOUNT_POSTS_POST
+                WHERE 
+                    POST_ID = %s AND
+                    ACCOUNT_ID = %s
+            ''', [post_id, user_id]).fetchone()#check if post belongs to logged user, Null otherwise
+            if result is not None:
+                print(f"DELETING POST {post_id}")
+                cursor.execute('''
+                    DELETE FROM POST
+                    WHERE ID = %s
+                ''', [post_id])
+                return redirect(reverse('home_page'))
+            return HttpResponse("YOU CAN ONLY DELETE YOUR OWN POST BUT NICE TRY")
+
+
 def save_post_media(media):
     fs = FileSystemStorage()
     media_name = fs.save(media.name, media)
