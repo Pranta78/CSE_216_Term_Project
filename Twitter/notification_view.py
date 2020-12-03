@@ -64,13 +64,14 @@ def get_follow_notifs(user_id):
                                             n.ID, n.TIMESTAMP, nna.SEEN,
                                             (SELECT ACCOUNTNAME from ACCOUNT WHERE ACCOUNT.ID = afa.ACCOUNT_ID) as FOLLOWER_NAME
                                         FROM NOTIFICATION n 
-                                        JOIN NOTIFICATION_NOTIFIES_ACCOUNT nna on(nna.NOTIFICATION_ID = n.ID) 
+                                        JOIN NOTIFICATION_NOTIFIES_ACCOUNT nna 
+                                        on(nna.NOTIFICATION_ID = n.ID  AND nna.ACCOUNT_ID = %s) 
                                         JOIN FOLLOW_NOTIFICATION fn on(n.ID = fn.NOTIFICATION_BASE_ID) 
                                         JOIN ACCOUNT_FOLLOWS_ACCOUNT afa on( 
                                             afa.F_NOTIFICATION_ID = fn.FOLLOW_NOTIFICATION_ID AND 
                                             fn.FOLLOWED_ACCOUNT_ID = %s 
                                         )
-                                        ORDER BY n.TIMESTAMP DESC ''', [user_id]).fetchall()
+                                        ORDER BY n.TIMESTAMP DESC ''', [user_id,user_id]).fetchall()
         if results_rows is not None and len(results_rows) > 0:
             for result_row in results_rows:
                 follow_notifications.append(

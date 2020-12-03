@@ -1,8 +1,11 @@
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.db import connection
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.core.files.storage import FileSystemStorage
+from django.views import defaults
+
 from .auth import auth_or_redirect, is_user_authenticated
 from .comment_view import get_tweet_comment_chains,get_comment_chain
 from .notification_view import insert_mention_notif_from_post_text, get_unseen_notif_count
@@ -249,23 +252,29 @@ def create_tweet(request):
 @auth_or_redirect
 def delete_post(request, post_id):
     user_id = request.session['user_id']
-    if request.POST:
-        with connection.cursor() as cursor:
-            result = cursor.execute('''
-                SELECT ACCOUNT_ID 
-                FROM ACCOUNT_POSTS_POST
-                WHERE 
-                    POST_ID = %s AND
-                    ACCOUNT_ID = %s
-            ''', [post_id, user_id]).fetchone()#check if post belongs to logged user, Null otherwise
-            if result is not None:
-                print(f"DELETING POST {post_id}")
-                cursor.execute('''
-                    DELETE FROM POST
-                    WHERE ID = %s
-                ''', [post_id])
-                return redirect(reverse('home_page'))
-            return HttpResponse("YOU CAN ONLY DELETE YOUR OWN POST BUT NICE TRY")
+    with connection.cursor() as cursor:
+        result = cursor.execute('''
+            SELECT ACCOUNT_ID 
+            FROM ACCOUNT_POSTS_POST
+            WHERE 
+                POST_ID = %s AND
+                ACCOUNT_ID = %s
+        ''', [post_id, user_id]).fetchone()  # check if post belongs to logged user, Null otherwise
+    if result is None:
+        print(f"{user_id} could not delete post ={post_id}")
+        raise PermissionDenied
+    else:
+        if request.POST:
+            print(f"DELETING POST {post_id}")
+            cursor.execute('''
+                DELETE FROM POST
+                WHERE ID = %s
+            ''', [post_id])
+            return redirect(reverse('home_page'))
+        # else:
+        #     return #TODO
+    raise defaults.server_error
+
 
 
 def save_post_media(media):
