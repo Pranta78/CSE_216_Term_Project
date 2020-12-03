@@ -123,12 +123,14 @@ def create_comment(request, tweetID, parentCommentID):
 
         # To avoid getting a database error
         if commentBody or media:
-            allowed_accounts = request.POST.get("privacy", None)
+            # allowed_accounts = request.POST.get("privacy", None)
+            #
+            # if allowed_accounts is None:
+            #     allowed_accounts = "PUBLIC"
+            # else:
+            #     allowed_accounts = allowed_accounts.upper()
 
-            if allowed_accounts is None:
-                allowed_accounts = "PUBLIC"
-            else:
-                allowed_accounts = allowed_accounts.upper()
+            allowed_accounts = "PUBLIC"
 
             print(f"comment,  media {media}")
             if media:
