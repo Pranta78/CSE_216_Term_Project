@@ -13,13 +13,14 @@
         <div class="container-fluid mx-0 my-0">
             <div class="row">
 
+                <div class="col-11">
                 <button type="submit" class=" btn btn-link text-left " style="width:100%;">
                     <div class = "card">
-                        <h6 class="card-title ml-2" style="display: inline;">{{ notification.TIMESTAMP }}
+                        <h6 class="card-title ml-2 py-1" style="display: inline;">{{ notification.TIMESTAMP }}
                             {% if notification.SEEN %}
-                                <small class="text-white bg-primary rounded px-2">
-                                      Seen {{ notification.SEEN }}
-                                </small>
+                                <span class="text-white bg-primary rounded px-2 inline">
+                                      SEEN&nbsp;<i class="fa fa-check-square text-white"></i>
+                                </span>
                             {% endif %}
                         </h6>
                         <div class = "card-body py-2">
@@ -27,11 +28,9 @@
                         </div>
                     </div>
                 </button>
-
+                </div>
             </div>
         </div>
-
-
 </form>
 
 {% endblock %}
