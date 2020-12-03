@@ -260,19 +260,42 @@ def delete_post(request, post_id):
                 POST_ID = %s AND
                 ACCOUNT_ID = %s
         ''', [post_id, user_id]).fetchone()  # check if post belongs to logged user, Null otherwise
-    if result is None:
-        print(f"{user_id} could not delete post ={post_id}")
-        raise PermissionDenied
-    else:
-        if request.POST:
-            print(f"DELETING POST {post_id}")
-            cursor.execute('''
-                DELETE FROM POST
-                WHERE ID = %s
-            ''', [post_id])
-            return redirect(reverse('home_page'))
-        # else:
-        #     return #TODO
+        if result is None:
+            print(f"{user_id} could not delete post ={post_id}")
+            raise PermissionDenied
+        else:
+            if request.POST:
+                print(f"DELETING POST {post_id}")
+                cursor.execute('''
+                    DELETE FROM POST
+                    WHERE ID = %s
+                ''', [post_id])
+                return redirect(reverse('home_page'))
+            else:
+                context = {}
+                result = cursor.execute('''
+                                        SELECT
+                                            p.ID, p.TIMESTAMP, p.TEXT, p.MEDIA, a.ACCOUNTNAME, a.PROFILE_PHOTO
+                                        FROM 
+                                            POST p
+                                            JOIN ACCOUNT_POSTS_POST app on(app.POST_ID = p.ID)
+                                            JOIN ACCOUNT a on (a.ID = app.ACCOUNT_ID)
+                                        WHERE 
+                                            p.ID = %s ''', [post_id]).fetchone()
+
+                if result is not None:
+                    context["POST"] = {
+                        "AUTHOR": result[4],
+                        "PROFILE_PHOTO": result[5],
+                        "TEXT": result[2],
+                        "MEDIA": result[3],
+                        "TIMESTAMP": result[1],
+                        "POST_ID": result[0],
+                        #not going to bother with comment chain here.
+                    }
+                    print(f'dedede Z{context}')
+                    mark_post_like_bookmark(cursor, user_id, context["POST"])
+                    return render(request,"ConfirmDeleteView.html", context)
     raise defaults.server_error
 
 

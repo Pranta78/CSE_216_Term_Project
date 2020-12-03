@@ -1,0 +1,27 @@
+{% extends "skeleton.html" %}
+<!--the modular post html should not concern itself with showing comments -->
+{% block skeleton_content %}
+     <div class=" card col-12">
+         <div class="card-body">
+            <h5 class="card-title " style="display: inline;">
+                <i class="fa fa-exclamation-triangle fa-lg text-danger"></i>
+                <span class="text-danger">Are you sure you want to delete this post?</span>
+            </h5>
+             <br><br>
+             <div id = "post">
+             {% include "ModularPost.html" with post=POST %}
+             </div>
+
+             <form method="POST" action="{% url "delete_post"  POST.POST_ID%}">{% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Confirm Deletion</button>
+             </form>
+         </div>
+     </div>
+
+    {% block javascript %}
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    {% endblock %}
+
+    {% include 'ajax_like_bookmark.html' with div_id="post" only %}
+
+{% endblock %}
