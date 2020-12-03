@@ -11,13 +11,12 @@
 
         {% if USERLOGGEDIN %}
         <form method="POST" enctype="multipart/form-data" action = "/create/reply/comment/{{ COMMENTID }}/">{% csrf_token %}
-
             <div class="col-8">
                 <div class="form-row">
                    <textarea class="form-control" placeholder="Reply?" name = "CommentBody" id="inputCommentBody" ></textarea>
                 </div>
              </div>
-
+             <br>
             <div class="form-row">
                 <div class="col-4" align="left">
                     <!--
@@ -45,8 +44,8 @@
                 <img class="img-fluid" style="display: none;" id="media_preview">
             </div>
         </form>
-
-        <div id="comment">
+        <br>
+        <div class="row col-8" id="comment">
         {% for reply in replies %}
             {% include "ModularPost.html" with post=reply %}
         {% endfor %}

@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
 
-from Twitter.auth import auth_or_redirect
+from Twitter.auth import auth_or_redirect, is_user_authenticated
 from .notification_view import insert_mention_notif_from_post_text
 
 
@@ -21,7 +21,8 @@ def create_reply_tweet(request, tweetID):
 def create_reply_comment(request, commentID):
     user_id = request.session.get("user_id", None)
     with connection.cursor() as cursor:
-        result = cursor.execute("SELECT t.TWEET_ID, a.id, a.ACCOUNTNAME, a.PROFILE_PHOTO, p.TEXT, p.MEDIA, p.TIMESTAMP, p.ID "
+        result = cursor.execute("SELECT t.TWEET_ID, a.id, a.ACCOUNTNAME, a.PROFILE_PHOTO,"
+                                " p.TEXT, p.MEDIA, p.TIMESTAMP, p.ID , a.ID  "
                                  "FROM TWEET t "
                                  "JOIN TWEET_COMMENT c on (t.TWEET_ID = c.TWEET_ID)"
                                  "JOIN POST p on(c.POST_ID = p.ID)"
@@ -43,6 +44,7 @@ def create_reply_comment(request, commentID):
                     "TIMESTAMP": result[6],
                     "POST_ID": result[7],
                     "COMMENTLINK": "/create/reply/comment/%s" % commentID,
+                    "AUTHOR_ID": int(result[8]),
                 }
                 # would also be nice to set project rules for template context strings(i.e should they be full caps or not)
 
@@ -66,10 +68,12 @@ def create_reply_comment(request, commentID):
                     "COMMENTID": commentID,  # use for generating link for comment reply button
                     "POST_ID":  result[7],
                     "USERLOGGEDIN": True,
+                    "USER_ID": user_id,
                 }
 
                 cursor.execute('''SELECT 
-                                        AUTHOR, PROFILE_PHOTO,  TEXT, MEDIA, TIMESTAMP, POST_ID, COMMENT_ID, "replied_to"
+                                        AUTHOR, PROFILE_PHOTO,  TEXT, MEDIA, TIMESTAMP, POST_ID,
+                                         COMMENT_ID, "replied_to", ACCOUNT_ID
                                     FROM
                                         COMMENT_VIEW 
                                     WHERE
@@ -87,6 +91,7 @@ def create_reply_comment(request, commentID):
                         "POST_ID": reply_result[5],
                         "replied_to": reply_result[7],
                         "COMMENTLINK": "/create/reply/comment/%s" % reply_result[6],
+                        "AUTHOR_ID": int(reply_result[8]),
                     }
 
                     cursor.execute(f"SELECT COUNT(*) FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={reply['POST_ID']};")
@@ -118,7 +123,7 @@ def create_comment(request, tweetID, parentCommentID):
 
         # To avoid getting a database error
         if commentBody or media:
-            allowed_accounts = request.POST.get("privacy", None)#TODO This is pointless for comments. Update schema
+            allowed_accounts = request.POST.get("privacy", None)
 
             if allowed_accounts is None:
                 allowed_accounts = "PUBLIC"
@@ -169,7 +174,8 @@ def create_comment(request, tweetID, parentCommentID):
 def get_tweet_comments_unorganized(cursor, tweet_id):
     result = cursor.execute('''
         SELECT
-            POST_ID, TIMESTAMP, TEXT, MEDIA,AUTHOR, PROFILE_PHOTO, COMMENT_ID, "replied_to", PARENT_COMMENT_ID, TWEET_ID
+            POST_ID, TIMESTAMP, TEXT, MEDIA,AUTHOR, PROFILE_PHOTO, COMMENT_ID, "replied_to",
+            PARENT_COMMENT_ID, TWEET_ID, ACCOUNT_ID
         FROM 
             COMMENT_VIEW 
         WHERE
@@ -190,6 +196,7 @@ def get_tweet_comments_unorganized(cursor, tweet_id):
             "COMMENT_ID": result_row[6],
             "PARENT_COMMENT_ID": result_row[8],
             "COMMENTLINK": reverse("comment_reply_view", kwargs={"commentID": result_row[6]}),
+            "AUTHOR_ID": int(result_row[10]),
         }
         if result_row[8]:
             comment["replied_to"] = result_row[7]
@@ -228,7 +235,7 @@ def get_tweet_comment_chains(cursor, tweet_id):
     comments = get_tweet_comments_unorganized(cursor, tweet_id)
     return organizeCommentChains(comments)
 
-def get_comment_chain(cursor, tweet_id, comment):
+def get_comment_chain(cursor, tweet_id, comment):#need to fin indirectly parented children too
     comments = get_tweet_comments_unorganized(cursor, tweet_id)
     chains = organizeCommentChains(comments)
     for chain in chains:

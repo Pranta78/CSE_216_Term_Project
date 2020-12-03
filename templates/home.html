@@ -45,7 +45,7 @@
                 {% include 'ModularPost.html' with post=tweet index=forloop.counter0%}
             {% endfor %}
         </div>
-
+         {% if suggestions %}
         <div class="col-4">
             <h5>Suggested profiles to follow!</h5>
             <ul class="list-group">
@@ -76,6 +76,7 @@
               </li>
             </ul>
         </div>
+    {% endif %}
     </div>
 
 

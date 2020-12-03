@@ -228,7 +228,6 @@ def like_bookmark_handler(request):
                                         SELECT PM_NOTIFICATION_ID FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={post_id} 
                                     )
                                     ''')
-                    cursor.execute(f"DELETE FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={post_id};")
                     connection.commit()
                     data['like'] = 'unlike'
                     print(f"newly unlike {data}")

@@ -293,7 +293,6 @@ def delete_post(request, post_id):
                         "POST_ID": result[0],
                         #not going to bother with comment chain here.
                     }
-                    print(f'dedede Z{context}')
                     mark_post_like_bookmark(cursor, user_id, context["POST"])
                     return render(request,"ConfirmDeleteView.html", context)
     raise defaults.server_error
@@ -311,7 +310,7 @@ def detailed_tweet_view(request, tweetID):
     with connection.cursor() as cursor:
         user_id = request.session.get("user_id")
 
-        cursor.execute("SELECT a.ACCOUNTNAME, a.PROFILE_PHOTO,  p.TEXT, p.MEDIA, p.TIMESTAMP, p.ID "
+        cursor.execute("SELECT a.ACCOUNTNAME, a.PROFILE_PHOTO,  p.TEXT, p.MEDIA, p.TIMESTAMP, p.ID, a.ID "
                        "FROM TWEET t JOIN POST p on(t.POST_ID = p.ID)"
                        "join ACCOUNT_POSTS_POST app on(t.POST_ID = app.POST_ID)"
                        "join ACCOUNT a on(a.ID = app.ACCOUNT_ID)WHERE t.TWEET_ID = %s", (tweetID,))
@@ -326,6 +325,7 @@ def detailed_tweet_view(request, tweetID):
                 "MEDIA": result[3],
                 "TIMESTAMP": result[4],
                 "POST_ID": result[5],
+                "AUTHOR_ID": int(result[6]),
                 "COMMENTLINK": reverse("detailedTweetView", kwargs={"tweetID": tweetID}) + "#tweet-reply-box",
             }
 
@@ -340,6 +340,7 @@ def detailed_tweet_view(request, tweetID):
                 "notification_count": notification_count,
                 "tweet": tweet,
                 "TWEETID": tweetID,#use for generating link for comment reply button
+                "USER_ID": user_id,
                 "USERLOGGEDIN": is_user_authenticated(request),
                 "COMMENTCHAINS": comment_chains,
             }

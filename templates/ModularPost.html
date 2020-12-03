@@ -20,15 +20,17 @@
             </small>
 
         </h5>
-
-        <block class="dropdown inline">
-            <button class="btn float-right dropdown-toggle"  type="button"  id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="fa fa-ellipsis-h"></i>
-            </button>
-          <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-              <a class="dropdown-item text-danger"  target="_blank" href={% url "delete_post" post.POST_ID%}>Delete Post</a>
-          </div>
-        </block>
+    {{ USER_ID }}aaa {{ post.AUTHOR_ID }}
+        {% if post.AUTHOR_ID and USER_ID and post.AUTHOR_ID == USER_ID %}
+            <block class="dropdown inline">
+                <button class="btn float-right dropdown-toggle"  type="button"  id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fa fa-ellipsis-h"></i>
+                </button>
+              <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                  <a class="dropdown-item text-danger"  target="_blank" href={% url "delete_post" post.POST_ID%}>Delete Post</a>
+              </div>
+            </block>
+        {% endif %}
         <p class="card-text"><small class="text-muted">{{ post.TIMESTAMP }}</small></p>
 
         {% if post.replied_to %}
