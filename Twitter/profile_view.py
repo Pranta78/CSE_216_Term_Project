@@ -643,18 +643,20 @@ def follow_handler(action, username, profilename, user_id, profile_id):
         # alse need to delete from notifications and notification_notifies_account
         # Delete the corresponding follow entry
         elif action == "unfollow":
+            # this will cascade to follow_notif and to account_follows_account
             cursor.execute('''
-                DELETE FROM FOLLOW_NOTIFICATION
-                WHERE FOLLOW_NOTIFICATION_ID =
-                (
-                    SELECT fn.FOLLOW_NOTIFICATION_ID
-                    FROM ACCOUNT_FOLLOWS_ACCOUNT afa 
-                    JOIN FOLLOW_NOTIFICATION fn on (fn.FOLLOW_NOTIFICATION_ID =afa.F_NOTIFICATION_ID )
-                    WHERE 
-                        afa.ACCOUNT_ID = :follower_id AND
-                        fn.FOLLOWED_ACCOUNT_ID = :followed_id
-                )
-            ''', {'follower_id': user_id, 'followed_id': profile_id})
+            DELETE FROM NOTIFICATION 
+            WHERE ID = (
+                SELECT 
+                    fn.NOTIFICATION_BASE_ID 
+                FROM 
+                    ACCOUNT_FOLLOWS_ACCOUNT afa 
+                    JOIN FOLLOW_NOTIFICATION fn
+                    on (fn.FOLLOW_NOTIFICATION_ID =afa.F_NOTIFICATION_ID )
+                WHERE 
+                    afa.ACCOUNT_ID = :follower_id AND
+                    fn.FOLLOWED_ACCOUNT_ID = :followed_id
+            )''', {'follower_id': user_id, 'followed_id': profile_id})
 
             connection.commit()
             print("Follow notif Deletion performed!")
