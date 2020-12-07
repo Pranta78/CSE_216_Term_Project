@@ -20,6 +20,7 @@ def notifications_all_view(request):
             "notification_count": unseen_notification_count,
             "NOTIFICATIONS": notifications,
             "all_notifs_active": True,
+            "notifications_is_active": True
         }
 
         print(notifications)
@@ -81,6 +82,7 @@ def get_follow_notifs(user_id):
                         "SEEN": result_row[2],  # null if not seen
                         "NOTIFICATION_LINK": f"/user/{result_row[3]}/",
                         "NOTIFICATION_TEXT": f"{result_row[3]} has followed you.",
+                        "notifications_is_active": True
                     }
                 )
 
@@ -97,6 +99,7 @@ def mention_notifications_view(request):
             "notification_count": unseen_notification_count,
             "NOTIFICATIONS": notifications,
             "mentions_active": True,
+            "notifications_is_active": True
         }
         return render(request, "NotificationView.html", context)
 
@@ -112,6 +115,7 @@ def retweet_notifications_view(request):
             "notification_count": unseen_notification_count,
             "NOTIFICATIONS": notifications,
             "retweets_active": True,
+            "notifications_is_active": True
         }
         return render(request, "NotificationView.html", context)
 
@@ -128,6 +132,7 @@ def like_notifications_view(request):
             "notification_count": unseen_notification_count,
             "NOTIFICATIONS": notifications,
             "likes_active": True,
+            "notifications_is_active": True
         }
         return render(request, "NotificationView.html", context)
 
@@ -143,6 +148,7 @@ def follow_notifications_view(request):
             "notification_count": get_unseen_notif_count(user_id),
             "NOTIFICATIONS": notifications,
             "follows_active": True,
+            "notifications_is_active": True
         }
         return render(request, "NotificationView.html", context)
 
@@ -239,6 +245,7 @@ def get_mention_notifs(user_id):
                         "NOTIFICATION_ID": result_row[0],
                         "TIMESTAMP": result_row[1],
                         "SEEN": result_row[2],  # null if not seen
+                        "notifications_is_active": True
                     }
                 if result_row[4] is not None:
                     n["NOTIFICATION_LINK"] = reverse("detailedTweetView", kwargs={"tweetID": result_row[4]})
@@ -299,6 +306,7 @@ def get_retweet_notifs(user_id):
                          "post_id": result_row[3],
                          "account_name": result_row[6],
                          "pm_notification_id": result_row[7],
+                        "notifications_is_active": True
                      })}
                 if result_row[4] is not None:
                     n["NOTIFICATION_TEXT"] = f"You tweet was retweeted by {result_row[6]} ."
