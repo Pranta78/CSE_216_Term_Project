@@ -23,7 +23,7 @@ from .views import (create_account, login, home_page,
 
 from .profile_view import (profile, profile_edit, user_profile, follower,
                            following, viewLikedPosts, viewPostedTweets,
-                           viewTweetMedia, viewTweetReply)
+                           viewTweetMedia, viewTweetReply, viewRetweetedPosts)
 
 from .message_view import message, inbox
 from .trends_view import show_hashtag, trend
@@ -51,6 +51,7 @@ urlpatterns = [
     url(r'^user/(\w+)/following/$', following, name='user_profile_following'),
     url(r'^user/(\w+)/tweets/$', viewPostedTweets, name='user_profile_tweets'),
     url(r'^user/(\w+)/tweets_and_replies/$', viewTweetReply, name='user_profile_tweets_and_replies'),
+    url(r'^user/(\w+)/retweets/$', viewRetweetedPosts, name='user_profile_retweets'),
     url(r'^user/(\w+)/media/$', viewTweetMedia, name='user_profile_media'),
     url(r'^user/(\w+)/likes/$', viewLikedPosts, name='user_profile_likes'),
     url(r'^inbox/(\w+)/$', inbox, name='user_inbox'),
