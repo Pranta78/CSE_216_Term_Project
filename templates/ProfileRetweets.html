@@ -7,7 +7,7 @@
                 <p>Nothing to display!</p>
             {% else %}
                 {% for rt in retweets %}
-                    {% include 'ModularRetweetCard.html' with RT=rt index=forloopforloop.counter0%}
+                    {% include 'ModularRetweetCard.html' with RT=rt index=forloop.counter0%}
                 {% endfor %}
             {% endif %}
         </div>

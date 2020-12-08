@@ -245,19 +245,6 @@ def viewLikedPosts(request, profilename):
 
         profile_id = profile_id[0]
 
-        # IS_USER_AUDIENCE function is called to check whether the visitor (with username as user name)
-        # has sufficient permission to see the post
-
-        # cursor.execute('''SELECT P.ID POST_ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
-        #                    FROM ACCOUNT_LIKES_POST ALP JOIN POST P
-        #                    ON(ALP.POST_ID = P.ID)
-        #                    JOIN ACCOUNT_POSTS_POST APP
-        #                    ON(P.ID = APP.POST_ID)
-        #                    JOIN ACCOUNT A
-        #                    ON(APP.ACCOUNT_ID = A.ID)
-        #                    WHERE ALP.ACCOUNT_ID = :profile_id
-        #                    AND IS_USER_AUDIENCE(:username, P.ID) = 1;''', {'profile_id': profile_id, 'username': username})
-
         cursor.execute('''SELECT TV.POST_ID, TIMESTAMP, TEXT, MEDIA, PROFILE_PHOTO, AUTHOR,
                           COMMENTLINK
                           FROM ACCOUNT_LIKES_POST ALP JOIN TWEET_VIEW TV
@@ -341,17 +328,6 @@ def viewPostedTweets(request, profilename):
 
         profile_id = profile_id[0]
 
-        # cursor.execute('''SELECT T.TWEET_ID ID, P.ID POST_ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
-        #                   FROM TWEET T JOIN POST P
-        #                   ON(T.POST_ID = P.ID)
-        #                   JOIN ACCOUNT_POSTS_POST APP
-        #                   ON(P.ID = APP.POST_ID)
-        #                   JOIN ACCOUNT A
-        #                   ON(APP.ACCOUNT_ID = A.ID)
-        #                   WHERE APP.ACCOUNT_ID = :profile_id
-        #                   AND IS_USER_AUDIENCE(:username, P.ID) = 1
-        #                   ORDER BY P.TIMESTAMP DESC;''', {'profile_id': profile_id, 'username': username})
-
         cursor.execute('''SELECT TV.POST_ID, TIMESTAMP, TEXT, MEDIA, PROFILE_PHOTO, AUTHOR, COMMENTLINK
                           FROM TWEET_VIEW TV
                           WHERE ACCOUNT_ID = :profile_id
@@ -415,16 +391,6 @@ def viewTweetMedia(request, profilename):
             return HttpResponse("User not found!")
 
         profile_id = profile_id[0]
-
-        # cursor.execute('''SELECT P.ID POST_ID, P.TIMESTAMP, P.TEXT, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
-        #                   FROM POST P JOIN ACCOUNT_POSTS_POST APP
-        #                   ON(P.ID = APP.POST_ID)
-        #                   JOIN ACCOUNT A
-        #                   ON(APP.ACCOUNT_ID = A.ID)
-        #                   WHERE APP.ACCOUNT_ID = :profile_id
-        #                   AND P.MEDIA IS NOT NULL
-        #                   AND IS_USER_AUDIENCE(:username, P.ID) = 1
-        #                   ORDER BY P.TIMESTAMP DESC;''', {'profile_id': profile_id, 'username': username})
 
         cursor.execute('''SELECT TV.POST_ID, TIMESTAMP, TEXT, MEDIA, PROFILE_PHOTO, AUTHOR, COMMENTLINK
                           FROM TWEET_VIEW TV
@@ -566,6 +532,7 @@ def viewTweetReply(request, profilename):
 
     return render(request, template_name, context)
 
+
 def viewRetweetedPosts(request, profile_name):
     user_id = request.session['user_id']
     with connection.cursor() as cursor:
@@ -588,10 +555,13 @@ def viewRetweetedPosts(request, profile_name):
             JOIN 
                 ACCOUNT a on(a.Id = app.ACCOUNT_ID)
             WHERE
-                rta.ACCOUNTNAME = %s
+                rta.ACCOUNTNAME = :profile_name
+                AND
+                IS_USER_AUDIENCE(:username, p.ID) = 1
             ORDER BY 
-                arp.TIMESTAMP DESC
-            ''', [profile_name]).fetchall()#might need is_user_audience checks
+                arp.TIMESTAMP DESC''',
+            {'profile_name': profile_name, 'username': user_name}).fetchall()#might need is_user_audience checks
+
             retweets = [
                 {
                     "AUTHOR": result_row[1],

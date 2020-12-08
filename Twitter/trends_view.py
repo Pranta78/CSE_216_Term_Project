@@ -50,17 +50,6 @@ def show_hashtag(request, hashtag):
         if count == 0:
             return HttpResponse("No posts were found for given hashtag")
         else:
-            # cursor.execute('''SELECT P.ID POST_ID, P.TEXT, P.TIMESTAMP, P.MEDIA, A.PROFILE_PHOTO, A.ACCOUNTNAME AUTHOR
-            #                   FROM HASHTAG H JOIN POST_CONTAINS_HASHTAG PCH
-            #                   ON(H.TEXT = PCH.HASHTAG_TEXT)
-            #                   JOIN POST P
-            #                   ON(PCH.POST_ID = P.ID)
-            #                   JOIN ACCOUNT_POSTS_POST APP
-            #                   ON(P.ID = APP.POST_ID)
-            #                   JOIN ACCOUNT A
-            #                   ON(APP.ACCOUNT_ID = A.ID)
-            #                   WHERE H.TEXT = :hashtag;''', {'hashtag': hashtag})
-
             cursor.execute('''SELECT TV.POST_ID, TIMESTAMP, TV.TEXT, MEDIA, PROFILE_PHOTO, AUTHOR,
                               COMMENTLINK
                               FROM HASHTAG H JOIN POST_CONTAINS_HASHTAG PCH

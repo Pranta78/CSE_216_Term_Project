@@ -20,7 +20,7 @@
     </div>
 
     <div class="container">
-    <form method="POST"  style="align-content: center; margin-left: 30%; margin-right: 30%">{% csrf_token %}
+    <form method="POST"  style="align-content: center; margin-left: 30%; margin-right: 30%" autocomplete="off">{% csrf_token %}
         <div class="form-group">
           <label for="inputUsername" style="text-align: left">Username or Email</label>
           <input type="text" class="form-control" id="inputUsername" placeholder="Username" name="username">

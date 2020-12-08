@@ -99,7 +99,8 @@ def home_page(request):
                            JOIN ACCOUNT_FOLLOWS_ACCOUNT AFA
                            ON (FN.FOLLOW_NOTIFICATION_ID = AFA.F_NOTIFICATION_ID)
                            WHERE AFA.ACCOUNT_ID = :user_id
-                           ORDER BY TV.TIMESTAMP DESC;''', {'user_id': user_id})
+                           AND IS_USER_AUDIENCE(:username, TV.POST_ID) = 1
+                           ORDER BY TV.TIMESTAMP DESC;''', {'user_id': user_id, 'username': username})
 
         tweetlist = dictfetchall(cursor)
 
@@ -222,13 +223,6 @@ def like_bookmark_handler(request):
             with connection.cursor() as cursor:
                 # if liked, then unlike, if not liked, then add to like list
                 if like == 'like':
-                    #unlike the else branch, this can always be executed as deleting is safe
-                    # cursor.execute(f'''
-                    #                 DELETE FROM POST_MENTION_NOTIFICATION WHERE POST_MENTION_NOTIFICATION_ID = (
-                    #                     SELECT PM_NOTIFICATION_ID FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={post_id}
-                    #                 )
-                    #                 ''')
-
                     result = cursor.execute('''
                         SELECT 
                             NOTIFICATION_BASE_ID

@@ -79,7 +79,7 @@
 
             <div class="row" align="center" id="nav_content" style="position: sticky; top: 0; z-index: 1; background-color: #ffffff">
                 <div class="col-10">
-                   <nav class="nav nav nav-pills nav-justified">
+                   <nav class="nav nav nav-pills nav-fill">
                       <a class="nav-item nav-link {% if tweet_is_active %}active{% endif %}" href="{% url 'user_profile_tweets' profile_name %}">Tweets</a>
                       <a class="nav-item nav-link {% if tweet_and_replies_is_active %}active{% endif %}" href="{% url 'user_profile_tweets_and_replies' profile_name %}">Tweets and replies</a>
                       <a class="nav-item nav-link {% if retweets_is_active %}active{% endif %}" href="{% url 'user_profile_retweets' profile_name %}">Retweets</a>
