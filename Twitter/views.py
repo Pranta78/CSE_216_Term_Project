@@ -223,12 +223,32 @@ def like_bookmark_handler(request):
                 # if liked, then unlike, if not liked, then add to like list
                 if like == 'like':
                     #unlike the else branch, this can always be executed as deleting is safe
-                    cursor.execute(f'''
-                                    DELETE FROM POST_MENTION_NOTIFICATION WHERE POST_MENTION_NOTIFICATION_ID = (
-                                        SELECT PM_NOTIFICATION_ID FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={post_id} 
-                                    )
-                                    ''')
-                    connection.commit()
+                    # cursor.execute(f'''
+                    #                 DELETE FROM POST_MENTION_NOTIFICATION WHERE POST_MENTION_NOTIFICATION_ID = (
+                    #                     SELECT PM_NOTIFICATION_ID FROM ACCOUNT_LIKES_POST WHERE ACCOUNT_ID={user_id} AND POST_ID={post_id}
+                    #                 )
+                    #                 ''')
+
+                    result = cursor.execute('''
+                        SELECT 
+                            NOTIFICATION_BASE_ID
+                        FROM 
+                            POST_MENTION_NOTIFICATION pmn 
+                            JOIN ACCOUNT_LIKES_POST alp on(alp.PM_NOTIFICATION_ID = pmn.POST_MENTION_NOTIFICATION_ID)
+                        WHERE 
+                            alp.POST_ID = %s AND
+                            alp.ACCOUNT_ID = %s
+                    ''', [post_id, user_id]).fetchone()
+
+                    if result is not None:
+                        cursor.execute('''DELETE FROM ACCOUNT_LIKES_POST
+                                        WHERE 
+                                            POST_ID = %s  AND
+                                            ACCOUNT_ID = %s ''', [post_id, user_id])
+                        base_notif_id = result[0]
+                        cursor.execute("DELETE FROM NOTIFICATION WHERE ID = %s", [base_notif_id])
+                        connection.commit()
+
                     data['like'] = 'unlike'
                     print(f"newly unlike {data}")
                 else:

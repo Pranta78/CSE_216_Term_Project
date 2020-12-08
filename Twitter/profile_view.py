@@ -566,6 +566,62 @@ def viewTweetReply(request, profilename):
 
     return render(request, template_name, context)
 
+def viewRetweetedPosts(request, profile_name):
+    user_id = request.session['user_id']
+    with connection.cursor() as cursor:
+        user_name = cursor.execute("SELECT ACCOUNTNAME from ACCOUNT WHERE ID = %s", [user_id]).fetchone()[0]
+
+        if user_name is not None:
+            result = cursor.execute('''
+            SELECT
+                arp.ACCOUNT_ID, rta.ACCOUNTNAME, rta.PROFILE_PHOTO, arp.TIMESTAMP, arp.PM_NOTIFICATION_ID,
+                p.ID, p.TIMESTAMP, p.TEXT,p.MEDIA,
+                a.ACCOUNTNAME, a.PROFILE_PHOTO
+            FROM
+                ACCOUNT_RETWEETS_POST arp
+            JOIN
+                ACCOUNT rta on(rta.ID = arp.ACCOUNT_ID)
+            JOIN
+                POST p on(p.ID = arp.POST_ID)
+            JOIN
+                ACCOUNT_POSTS_POST app on(p.ID = app.POST_ID)
+            JOIN 
+                ACCOUNT a on(a.Id = app.ACCOUNT_ID)
+            WHERE
+                rta.ACCOUNTNAME = %s
+            ORDER BY 
+                arp.TIMESTAMP DESC
+            ''', [profile_name]).fetchall()#might need is_user_audience checks
+            retweets = [
+                {
+                    "AUTHOR": result_row[1],
+                    "AUTHOR_PROFILE_PHOTO": result_row[2],
+                    "TIMESTAMP": result_row[3],
+                    "POST": {
+                        "AUTHOR": result_row[9],
+                        "PROFILE_PHOTO": result_row[10],
+                        "TEXT": result_row[7],
+                        "MEDIA": result_row[8],
+                        "TIMESTAMP": result_row[6],
+                        "POST_ID": result_row[5],
+                    },
+                    "RT_LINK": reverse("detailed_retweet_view", kwargs={
+                        "account_name": result_row[1],
+                        "post_id": result_row[5],
+                        "pm_notification_id":result_row[4],
+                    }),
+                } for result_row in result]
+
+            notification_count = cursor.callfunc("get_unseen_notif_count", int, [user_id]);
+            context = populateProfile(profile_name, user_name, user_id)
+            context["notification_count"] = notification_count
+            context["retweets"] = retweets
+            context["retweets_is_active"] = True
+            print(f"rtrtrtrt{context}")
+
+            return render(request, "ProfileRetweets.html",context)
+    return HttpResponse("Database connection failed")
+
 
 def follower(request, profilename):
     """
