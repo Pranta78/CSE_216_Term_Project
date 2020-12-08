@@ -306,7 +306,6 @@ def get_retweet_notifs(user_id):
                          "post_id": result_row[3],
                          "account_name": result_row[6],
                          "pm_notification_id": result_row[7],
-                        "notifications_is_active": True
                      })}
                 if result_row[4] is not None:
                     n["NOTIFICATION_TEXT"] = f"You tweet was retweeted by {result_row[6]} ."

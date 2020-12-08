@@ -242,7 +242,7 @@ def get_comment_chain(cursor, tweet_id, comment):#need to fin indirectly parente
     chains = organizeCommentChains(comments)
     for chain in chains:
         if chain[0]["COMMENT_ID"] == comment["COMMENT_ID"]:
-            return chain[1]
+            return [chain]
     return [[comment, []]]
 
 

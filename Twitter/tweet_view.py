@@ -149,8 +149,8 @@ def detailed_retweet_view(request, account_name, post_id, pm_notification_id):
                 "COMMENTLINK":  reverse("detailedTweetView", kwargs={"tweetID": result[4]}) + "#tweet-reply-box",
             }
             comment_chains = get_tweet_comment_chains(cursor, result[4])
-            mark_comment_chain_like_bookmark(cursor,comment_chains,user_id)
-            mark_post_like_bookmark(cursor, user_id,post)
+            mark_comment_chain_like_bookmark(cursor, comment_chains,user_id)
+            mark_post_like_bookmark(cursor, user_id, post)
         else:
             result = cursor.execute('''
                         SELECT
@@ -185,7 +185,7 @@ def detailed_retweet_view(request, account_name, post_id, pm_notification_id):
                 if result[11] is not None:
                     post["replied_to"] = result[12]
                 comment_chains = get_comment_chain(cursor, result[13], post)
-                mark_comment_chain_like_bookmark(comment_chains)
+                mark_comment_chain_like_bookmark(cursor, comment_chains, user_id)
                 mark_post_like_bookmark(cursor, user_id, post)
                 if len(comment_chains) > 0:
                     comment_chains[0][0] = None#root comment = this and it is already viewed as post
@@ -201,6 +201,7 @@ def detailed_retweet_view(request, account_name, post_id, pm_notification_id):
             "USERLOGGEDIN": is_user_authenticated(request),
             "COMMENTCHAINS": comment_chains,
         }
+        print(f"dsfdsfd{context}")
 
         return  render(request, "DetailedReTweetView.html", context)
     return HttpResponse("Server connection fail")
@@ -365,7 +366,6 @@ def mark_post_like_bookmark(cursor, user_id, post):
 
 def mark_comment_chain_like_bookmark(cursor, comment_chains, userID):
     for chain in comment_chains:
-        print(f"cch {chain[0]}")
         mark_post_like_bookmark(cursor, userID, chain[0])
         for reply in chain[1]:
             mark_post_like_bookmark(cursor, userID, reply)
