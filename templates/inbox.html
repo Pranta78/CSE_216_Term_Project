@@ -43,12 +43,11 @@
             {% endif %}
          </li>
         {% endfor %}
+    <div id="chatBox"></div>
     </ul>
 
-<br>
-
 {#<div style="position: sticky; bottom: 0;">#}
-<div id="chatBox" style="position: sticky; bottom: 0; background-color: white">
+<div style="position: sticky; bottom: 0; background-color: white">
     <form method="POST" enctype="multipart/form-data">{% csrf_token %}
         <div class="form-group">
             <div class="row">

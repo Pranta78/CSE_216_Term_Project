@@ -48,7 +48,9 @@
         {% endif %}
 
     {% if post.MEDIA %}
-        <img class="card-img-bottom" src="{{ post.MEDIA }}" alt="Card image" style="width: 100%; object-fit: cover; height: 25vw; border-radius: 3%;">
+        <a href="{{ post.MEDIA }}">
+            <img class="card-img-bottom" src="{{ post.MEDIA }}" alt="Card image" style="width: 100%; object-fit: cover; height: 25vw; border-radius: 3%;">
+        </a>
     {% endif %}
 
     {% if post.PARENT_TWEET_LINK %}
