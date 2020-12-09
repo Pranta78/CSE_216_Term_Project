@@ -123,9 +123,75 @@ def home_page(request):
         print("Printing tweetlist: ")
         print(tweetlist)
 
+    with connection.cursor() as cursor:
+        cursor.execute('''SELECT ARP.TIMESTAMP RT_TIMESTAMP, 
+                         (SELECT ACCOUNTNAME FROM ACCOUNT WHERE ID=ARP.ACCOUNT_ID) RT_AUTHOR, 
+                         (SELECT PROFILE_PHOTO FROM ACCOUNT WHERE ID=ARP.ACCOUNT_ID) RT_PROFILE_PHOTO,
+                         TV.POST_ID, TV.TIMESTAMP, TV.TEXT, TV.MEDIA, TV.PROFILE_PHOTO, TV.AUTHOR, TV.COMMENTLINK
+                         FROM 
+                            ACCOUNT_RETWEETS_POST ARP
+                         JOIN TWEET_VIEW TV
+                            ON(ARP.POST_ID = TV.POST_ID)
+                         JOIN FOLLOW_NOTIFICATION FN
+                            ON (ARP.ACCOUNT_ID = FN.FOLLOWED_ACCOUNT_ID)
+                         JOIN ACCOUNT_FOLLOWS_ACCOUNT AFA
+                            ON (FN.FOLLOW_NOTIFICATION_ID = AFA.F_NOTIFICATION_ID)
+                         WHERE AFA.ACCOUNT_ID = :user_id
+                            AND IS_USER_AUDIENCE(:username, TV.POST_ID) = 1
+                         ORDER BY RT_TIMESTAMP DESC;''', {'user_id': user_id, 'username': username})
+
+        retweet_tweet_list = dictfetchall(cursor)
+
+        cursor.execute('''SELECT ARP.TIMESTAMP RT_TIMESTAMP, 
+                          (SELECT ACCOUNTNAME FROM ACCOUNT WHERE ID=ARP.ACCOUNT_ID) RT_AUTHOR, 
+                          (SELECT PROFILE_PHOTO FROM ACCOUNT WHERE ID=ARP.ACCOUNT_ID) RT_PROFILE_PHOTO,
+                          CV.POST_ID, CV.TIMESTAMP, CV.TEXT, CV.MEDIA, CV.PROFILE_PHOTO, CV.AUTHOR, CV.COMMENTLINK,
+                          CV.PARENT_COMMENT_LINK, CV.PARENT_TWEET_LINK, "replied_to"
+                          FROM 
+                            ACCOUNT_RETWEETS_POST ARP
+                          JOIN COMMENT_VIEW CV
+                            ON(ARP.POST_ID = CV.POST_ID)
+                          JOIN FOLLOW_NOTIFICATION FN
+                            ON (ARP.ACCOUNT_ID = FN.FOLLOWED_ACCOUNT_ID)
+                          JOIN ACCOUNT_FOLLOWS_ACCOUNT AFA
+                            ON (FN.FOLLOW_NOTIFICATION_ID = AFA.F_NOTIFICATION_ID)
+                          WHERE AFA.ACCOUNT_ID = :user_id
+                            AND IS_USER_AUDIENCE(:username, CV.POST_ID) = 1
+                         ORDER BY RT_TIMESTAMP DESC;''', {'user_id': user_id, 'username': username})
+
+        retweet_comment_list = dictfetchall(cursor)
+        retweet_list = retweet_tweet_list + retweet_comment_list
+
+        for post in retweet_list:
+            cursor.execute(f'''SELECT COUNT(*)
+                               FROM ACCOUNT_LIKES_POST
+                               WHERE ACCOUNT_ID = :user_id
+                               AND POST_ID = :postID;''',
+                           {'user_id': user_id, 'postID': post["POST_ID"]})
+
+            count = cursor.fetchone()[0]
+
+            if int(count) == 1:
+                post["LIKED"] = True
+
+            cursor.execute(f'''SELECT COUNT(*)
+                               FROM ACCOUNT_BOOKMARKS_POST
+                               WHERE ACCOUNT_ID = :user_id
+                               AND POST_ID = :postID;''',
+                           {'user_id': user_id, 'postID': post["POST_ID"]})
+
+            count = cursor.fetchone()[0]
+
+            if int(count) == 1:
+                post["BOOKMARKED"] = True
+
+        print("\tPrinting RETWEETlist: ")
+        print(retweet_list)
+
     context = {"user_id": user_id,
                "username": username,
                "tweet_list": tweetlist,
+               "retweet_list": retweet_list,
                "notification_count": notification_count,
                "home_is_active": True,
                "suggestions": fetch_suggested_profile(username)}

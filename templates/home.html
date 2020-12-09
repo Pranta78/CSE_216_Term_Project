@@ -41,6 +41,26 @@
 
     <div class="row" id="home">
         <div class="col-8">
+            {% for retweet in retweet_list %}
+                <div class="card">
+                    <div class="card-body">
+                        <img src="{{ retweet.RT_PROFILE_PHOTO|default:"/media/default_profile.png" }}"  width="50px" height="50px" style="border-radius: 50%; border: 1px solid #777777;">
+                         <h5 class="card-title " style="display: inline;">
+                            {{ retweet.RT_AUTHOR }} <a href="{% url 'user_profile' retweet.RT_AUTHOR %}">
+                                @{{ retweet.RT_AUTHOR  }}
+                            </a>
+                             Retweeted <i class="fa fa-retweet fa-lg"></i>
+                        </h5>
+
+                        <p class="card-text"><small class="text-muted">{{ retweet.RT_TIMESTAMP }}</small></p>
+
+                         <div id ="post">
+                                {% include "ModularPost.html" with post=retweet %}
+                         </div>
+                    </div>
+                </div>
+            {% endfor %}
+
             {% for tweet in tweet_list %}
                 {% include 'ModularPost.html' with post=tweet index=forloop.counter0%}
             {% endfor %}

@@ -656,7 +656,7 @@ def follow_handler(action, username, profilename, user_id, profile_id):
     with connection.cursor() as cursor:
         # Follow the user
         if action == "follow":
-            data = cursor.callproc('INSERT_FOLLOW_NOTIF', (username, profilename, 'default' * 30))
+            data = cursor.callproc('INSERT_FOLLOW_NOTIF', [username, profilename, 'default' * 30])
 
             if data[2] == 'OK':
                 print("Follow successful!")
